@@ -1,6 +1,6 @@
 {
     "type": "project",
-    "name": "koromerzhin/labstag",
+    "name": "koromerzhin/template-symfony",
     "description": "Site Internet sous Symfony",
     "license": "MIT",
     "require": {
@@ -95,12 +95,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Labstag\\": "src/"
+            "App\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Labstag\\Tests\\": "tests/"
+            "App\\Tests\\": "tests/"
         }
     },
     "replace": {

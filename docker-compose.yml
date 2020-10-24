@@ -110,7 +110,7 @@ services:
         depends_on:
             - phpfpm
         volumes:
-            - ${PWD}/apps:/usr/local/apache2/htdocs/
+            - ${PWD}/apps:/var/www/
             - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
         networks:
             - net
@@ -121,7 +121,6 @@ services:
                 - "traefik.http.routers.www-symfony.rule=Host(`symfony.lxc`, `www.symfony.lxc`)"
                 - "traefik.http.middlewares.wwwredirectregex.redirectregex.regex=^http://symfony.lxc/(.*)"
                 - "traefik.http.middlewares.wwwredirectregex.redirectregex.replacement=http://www.symfony.lxc/$${1}"
-                - "traefik.http.routers.www-symfony.middlewares=wwwredirectregex"
                 - "traefik.http.routers.www-symfony.entrypoints=web"
                 - "traefik.http.services.www-symfony.loadbalancer.server.port=80"
     phpmyadmin:
@@ -141,14 +140,14 @@ services:
                 - "traefik.http.routers.phpmyadmin-symfony.entrypoints=web"
                 - "traefik.http.services.phpmyadmin-symfony.loadbalancer.server.port=80"
     phpfpm:
-        image: koromerzhin/php-fpm-symfony:7.4
+        image: koromerzhin/php-fpm-symfony:latest
         depends_on:
             - mariadb
             - openldap
             - mercure
             - mailhog
         volumes:
-            - ${PWD}/apps:/usr/local/apache2/htdocs
+            - ${PWD}/apps:/var/www/
             - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
         networks:
             - net

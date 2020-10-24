@@ -44,7 +44,7 @@ composer-update: ## COMPOSER update
 	docker exec $(PHPFPMFULLNAME) make composer-update
 
 composer-validate: ## COMPOSER validate
-	docker exec $(PHPFPMFULLNAME) make composer-validate
+	docker exec $(PHPFPMFULLNAME) make composer-validatef
 
 contributors: node_modules ## Contributors
 	@npm run contributors
@@ -98,7 +98,7 @@ install: node_modules apps/.env ## installation
 	@make docker-create-network -i
 	@make docker-deploy -i
 	@make sleep -i
-	@make verif -i
+	@make linter-launch -i
 
 install-dev: install
 	@make env-dev
