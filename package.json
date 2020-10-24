@@ -1,0 +1,40 @@
+{
+  "name": "@koromerzhin/template-symfony",
+  "version": "0.0.1",
+  "description": "Template de site internet sous Symfony",
+  "main": "index.js",
+  "scripts": {
+    "contributors": "all-contributors",
+    "changelog": "gitmoji-changelog",
+    "readme": "readme",
+    "licenses": "license-checker",
+    "commit": "sgc",
+    "dev-server": "encore dev-server",
+    "dev": "encore dev",
+    "watch": "encore dev --watch",
+    "build": "encore production --progress"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koromerzhin/template-symfony.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/koromerzhin/template-symfony/issues"
+  },
+  "homepage": "https://github.com/koromerzhin/template-symfony#readme",
+  "dependencies": {
+    "all-contributors-cli": "^6.19.0",
+    "gitmoji-changelog": "^2.1.0",
+    "license-checker": "^25.0.1",
+    "readme-md-generator": "^1.0.0",
+    "semantic-git-commit-cli": "^3.7.0"
+  },
+  "devDependencies": {
+    "@symfony/webpack-encore": "0.31.0",
+    "dotenv": "8.2.0",
+    "webpack-notifier": "1.8.0"
+  }
+}

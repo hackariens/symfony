@@ -1,0 +1,3 @@
+#index:
+#    path: /
+#    controller: Labstag\Controller\DefaultController::index
