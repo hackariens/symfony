@@ -31,8 +31,6 @@
 
 ### 🏠 [Homepage](https://github.com/koromerzhin/template-symfony#readme)
 
-### ✨ [Demo](https://www.letoullec.fr)
-
 ## Need
 Software:
  - make
