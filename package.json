@@ -4,7 +4,7 @@
   "description": "Template de site internet sous Symfony",
   "main": "index.js",
   "scripts": {
-    "linter-readme": "markdownlint",
+    "linter-markdown": "markdownlint",
     "contributors": "all-contributors",
     "changelog": "gitmoji-changelog",
     "readme": "readme",
