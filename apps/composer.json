@@ -69,7 +69,6 @@
         "behat/behat": "^3.7",
         "dama/doctrine-test-bundle": "^6.3",
         "doctrine/doctrine-fixtures-bundle": "^3.3",
-        "friendsoftwig/twigcs": "^3.2",
         "phpmd/phpmd": "^2.9",
         "phpstan/phpstan": "^0.12.50",
         "povils/phpmnd": "^2.3",
