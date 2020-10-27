@@ -45,6 +45,12 @@ Hosts :
 
 127.0.0.1 symfony.lxc www.symfony.lxc
 
+## Récupérer les images docker
+
+``` sh
+make docker-image-pull
+```
+
 ## Install
 
 ```sh
