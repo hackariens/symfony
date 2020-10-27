@@ -26,9 +26,7 @@
     "url": "https://github.com/koromerzhin/template-symfony/issues"
   },
   "homepage": "https://github.com/koromerzhin/template-symfony#readme",
-  "dependencies": {
-
-  },
+  "dependencies": {},
   "devDependencies": {
     "all-contributors-cli": "^6.19.0",
     "gitmoji-changelog": "^2.1.0",
