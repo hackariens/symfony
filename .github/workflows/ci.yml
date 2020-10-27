@@ -31,6 +31,10 @@ jobs:
         run: make install
       - name: linter readme.md
         run: make linter-readme
+      - name: Validate composer.json
+        run: |
+          cd apps
+          composer validate
       - name: Install Composer dependencies
         run: |
           cd apps
