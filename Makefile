@@ -111,6 +111,9 @@ linter-launch: apps/vendor node_modules ## Launch all linter
 	@make linter-phpcs -i
 	@make linter-phpmd -i
 
+linter-readme: node_modules ## linter README.md
+	@npm run linter-readme README.md
+
 linter-phpcbf: apps/vendor ## fixe le code PHP à partir d'un standard
 	docker exec $(PHPFPMFULLNAME) make linter-phpcbf
 
