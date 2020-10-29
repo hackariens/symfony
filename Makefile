@@ -94,7 +94,6 @@ git-check: node_modules ## CHECK before
 	@git status
 
 install: node_modules apps/.env ## installation
-	@make docker-create-network -i
 	@make docker-deploy -i
 	@make sleep -i
 	@make linter-launch -i
