@@ -40,11 +40,17 @@ composer-prod: ## Installation version de production
 composer-dev: ## Installation version de dev
 	docker exec $(PHPFPMFULLNAME) make composer-dev
 
+composer-dev-ci: ## Installation version de dev
+	cd apps && make composer-dev
+
 composer-update: ## COMPOSER update
 	docker exec $(PHPFPMFULLNAME) make composer-update
 
 composer-validate: ## COMPOSER validate
-	docker exec $(PHPFPMFULLNAME) make composer-validatef
+	docker exec $(PHPFPMFULLNAME) make composer-validate
+
+composer-validate-ci: ## COMPOSER validate
+	cd apps && make composer-validate
 
 contributors: node_modules ## Contributors
 	@npm run contributors
@@ -75,6 +81,12 @@ docker-image-pull: ## Get docker image
 	docker image pull phpmyadmin/phpmyadmin
 	docker image pull koromerzhin/phpfpm:latest-symfony-without-xdebug
 
+docker-logs: ## logs docker
+	docker service logs -f --tail 100 --raw $(PHPFPM)
+
+docker-ls: ## docker service
+	@docker stack services $(STACK)
+
 env-dev: apps/.env ## Installation environnement dev
 	sed -i 's/APP_ENV=prod/APP_ENV=dev/g' apps/.env
 
@@ -96,14 +108,14 @@ git-check: node_modules ## CHECK before
 install: node_modules apps/.env ## installation
 	@make docker-deploy -i
 	@make sleep -i
-	@make linter-launch -i
+	@make linter -i
 
 install-dev: install
 	@make env-dev
 	@make bdd-migrate -i
 	@make bdd-features -i
 
-linter-launch: apps/vendor node_modules ## Launch all linter
+linter: apps/vendor node_modules ## Launch all linter
 	@make linter-twigcs -i
 	@make linter-phpstan -i
 	@make linter-phpcpd -i
@@ -128,17 +140,35 @@ linter-phpcs-onlywarning: apps/vendor ## indique les erreurs de code non corrig�
 linter-phpcs-onlyerror: apps/vendor ## indique les erreurs de code non corrigé par PHPCBF
 	docker exec $(PHPFPMFULLNAME) make linter-phpcs-onlyerror
 
+linter-phpcs-onlyerror-ci: apps/vendor ## indique les erreurs de code non corrigé par PHPCBF
+	cd apps && make linter-phpcs-onlyerror
+
+linter-phpinsights: apps/vendor ## PHP Insights
+	docker exec $(PHPFPMFULLNAME) make linter-phpinsights
+
 linter-phpmd: apps/vendor ## indique quand le code PHP contient des erreurs de syntaxes ou des erreurs
 	docker exec $(PHPFPMFULLNAME) make linter-phpmd
+
+linter-phpmd-ci: apps/vendor ## indique quand le code PHP contient des erreurs de syntaxes ou des erreurs
+	cd apps && make linter-phpmd
 
 linter-phpmnd: apps/vendor ## Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes
 	docker exec $(PHPFPMFULLNAME) make linter-phpmnd
 
+linter-phpmnd-ci: apps/vendor ## Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes
+	cd apps && make linter-phpmnd
+
 linter-phpstan: apps/vendor ## regarde si le code PHP ne peux pas être optimisé
 	docker exec $(PHPFPMFULLNAME) make linter-phpstan
 
+linter-phpstan-ci: apps/vendor ## regarde si le code PHP ne peux pas être optimisé
+	cd apps && make linter-phpstan
+
 linter-twigcs: apps/vendor ## indique les erreurs de code de twig
 	docker exec $(PHPFPMFULLNAME) make linter-twigcs
+
+linter-twigcs-ci: apps/vendor ## indique les erreurs de code de twig
+	cd apps &&  make linter-twigcs
 
 logs: ## logs docker
 	docker service logs -f --tail 100 --raw $(STACK)
@@ -164,9 +194,18 @@ ssh: ## ssh
 tests-behat: apps/vendor ## Lance les tests behat
 	docker exec $(PHPFPMFULLNAME) make tests-behat
 
+tests-behat-ci: apps/vendor ## Lance les tests behat
+	cd apps && make tests-behat
+
 tests-launch: apps/vendor ## Launch all tests
 	@make tests-behat -i
-	@make tests-phpunit -i
+	@make tests-simple-phpunit-unit-integration -i
 
-tests-phpunit: apps/vendor ## lance les tests phpunit
-	docker exec $(PHPFPMFULLNAME) make tests-phpunit
+tests-simple-phpunit-unit-integration: apps/vendor ## lance les tests phpunit
+	docker exec $(PHPFPMFULLNAME) make tests-simple-phpunit-unit-integration
+
+tests-simple-phpunit-unit-integration-ci: apps/vendor ## lance les tests phpunit
+	cd apps && make tests-simple-phpunit-unit-integration
+
+tests-simple-phpunit: apps/vendor ## lance les tests phpunit
+	docker exec $(PHPFPMFULLNAME) make tests-simple-phpunit

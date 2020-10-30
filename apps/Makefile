@@ -68,6 +68,9 @@ linter-phpcs-onlywarning: vendor ## indique les erreurs de code non corrigé par
 linter-phpcs-onlyerror: vendor ## indique les erreurs de code non corrigé par PHPCBF
 	composer run phpcs-onlyerror
 
+linter-phpinsights: apps/vendor ## PHP Insights
+	composer run phpinsights
+
 linter-phpmd: vendor ## indique quand le code PHP contient des erreurs de syntaxes ou des erreurs
 	composer run phpmd
 
@@ -80,18 +83,15 @@ linter-phpstan: vendor ## regarde si le code PHP ne peux pas être optimisé
 linter-twigcs: twigcs.phar ## indique les erreurs de code de twig
 	php twigcs.phar templates
 
-sleep: ## sleep
-	sleep 90
-
-ssh: ## ssh
-	docker exec -ti $(PHPFPMFULLNAME) /bin/bash
-
 tests-behat: vendor ## Lance les tests behat
-	composer behat
+	composer run behat
 
 tests-launch: vendor ## Launch all tests
 	@make tests-behat -i
-	@make tests-phpunit -i
+	@make tests-simple-phpunit -i
 
-tests-phpunit: vendor ## lance les tests phpunit
-	composer simple-phpunit
+tests-simple-phpunit: vendor ## lance les tests phpunit
+	composer run simple-phpunit
+
+tests-simple-phpunit-unit-integration: vendor ## lance les tests phpunit
+	composer run simple-phpunit-unit-integration

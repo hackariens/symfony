@@ -1,7 +1,7 @@
 name: Continuous Integration
 on: [push]
 jobs:
-  environnement:
+  tests:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       fail-fast: false
@@ -26,115 +26,49 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
-  install:
-    needs: environnement
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      fail-fast: false
-      matrix:
-        operating-system: [ubuntu-latest]
-        php-versions: ["7.4"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: Install npm dependencies
         run: npm install
       - name: Validate composer.json
-        run: |
-          cd apps
-          composer validate
+        run: make composer-validate-ci
       - name: Install Composer dependencies
-        run: |
-          cd apps
-          composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
-  linter:
-    needs: install
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      fail-fast: false
-      matrix:
-        operating-system: [ubuntu-latest]
-        php-versions: ["7.4"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+        run: make composer-dev-ci
       - name: linter readme.md
         run: make linter-readme
       - name: Run PHP Code Sniffer
-        run: |
-          cd apps
-          php bin/phpcs src features/bootstrap tests --report=full --extensions=php --warning-severity=0
+        run: make linter-phpcs-onlyerror-ci
       - name: Run PHP MD
-        run: |
-          cd apps
-          php bin/phpmd src,features/bootstrap,tests text phpmd.xml
+        run: make linter-phpmd-ci
       - name: Run PHPMND
-        run: |
-          cd apps
-          php bin/phpmnd src,features/bootstrap,tests
-      - name: Run twigcs
-        run: |
-          cd apps
-          php git/twigcs templates
-  bootstrap:
-    needs: install
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      fail-fast: false
-      matrix:
-        operating-system: [ubuntu-latest]
-        php-versions: ["7.4"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+        run: make linter-phpmnd-ci
       - name: Test lancement bootstrap
-        run: npm run encore-dev
-  tests:
-    needs: install
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      fail-fast: false
-      matrix:
-        operating-system: [ubuntu-latest]
-        php-versions: ["7.4"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+        run: make encore-dev
+      - name: Run twigcs
+        run: make linter-twigcs-ci
+      - name: Test lancement bootstrap
+      - name: Run phpstan
+        run: make linter-phpstan-ci
       - name: Run Acceptance Tests
-        run: |
-          cd apps
-          php bin/behat --config behat.yaml
+        run: make tests-behat-ci
       - name: Run Tests
-        run: |
-          cd apps
-          php bin/simple-phpunit --testsuite unit,integration
+        run: make tests-simple-phpunit-unit-integration-ci
   docker:
-    needs: install
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      fail-fast: false
-      matrix:
-        operating-system: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: 'Docker swarm init'
-        run: docker swarm init --default-addr-pool 10.20.0.0/16
-      - name: 'Create proxy network'
-        run: make create-network
-      - name: 'Show HELP'
-        run: make help
-      - name: 'Build containers'
-        run: make deploy
-      - name: 'Check running stack'
-        run: docker stack ls
-      - name: 'Make sleep'
-        run: make sleep
-      - name: 'Installation version PROD'
-        run: make env-prod
-      - name: 'Check running containers'
-        run: docker service ls
-      - name: 'BDD MIGRATE'
-        run: make bdd-migrate
-      - name: 'Run the fixtures'
-        run: make bdd-fixtures
+        - name: Checkout
+          uses: actions/checkout@v2
+        - name: 'Docker swarm init'
+          run: docker swarm init --default-addr-pool 10.20.0.0/16
+        - name: 'Create proxy network'
+          run: make docker-create-network
+        - name: 'Build containers'
+          run: make docker-deploy
+        - name: 'Make sleep'
+          run: make sleep
+        - name: 'Installation version PROD'
+          run: make env-prod
+        - name: 'Check running containers'
+          run: make docker-ls
+        - name: 'BDD MIGRATE'
+          run: make bdd-migrate
+        # - name: 'Run the fixtures'
+        #   run: make bdd-fixtures

@@ -14,8 +14,6 @@
 
 ![Continuous Integration](https://github.com/koromerzhin/template-symfony/workflows/Continuous%20Integration/badge.svg?branch=develop)
 
-[![DepShield Badge](https://depshield.sonatype.org/badges/koromerzhin/template-symfony/depshield.svg)](https://depshield.github.io)
-
 > Template de site internet sous Symfony
 
 ## 🏠 [Homepage](https://github.com/koromerzhin/template-symfony#readme)
@@ -49,9 +47,21 @@ make docker-image-pull
 make install
 ```
 
-## Help
+## after git add
 
-```sh
+``` sh
+make git-check
+```
+
+## Replace git commit
+
+``` sh
+make git-commit
+```
+
+## help
+
+``` sh
 make help
 ```
 
