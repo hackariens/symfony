@@ -44,7 +44,6 @@ jobs:
         run: make encore-dev
       - name: Run twigcs
         run: make linter-twigcs-ci
-      - name: Test lancement bootstrap
       - name: Run phpstan
         run: make linter-phpstan-ci
       - name: Run Acceptance Tests
