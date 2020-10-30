@@ -2,152 +2,152 @@ version: "3.4"
 
 networks:
   proxynetwork:
-      external: true
+    external: true
   net:
     driver: overlay
     attachable: true
 
 volumes:
-    mariadb_data:
+  mariadb_data:
 
 services:
-    redis:
-      image: redis:6.0.8
-      networks:
-        - net
-    mailhog:
-      image: mailhog/mailhog
-      networks:
-          - net
-          - proxynetwork
-      depends_on:
-          - proxynetwork
-      deploy:
-        labels:
-              - "traefik.enable=true"
-              - "traefik.http.routers.mailhog-symfony.rule=Host(`mailhog.symfony.lxc`)"
-              - "traefik.http.routers.mailhog-symfony.entrypoints=web"
-              - "traefik.http.services.mailhog-symfony.loadbalancer.server.port=8025"
-    mercure:
-      image: dunglas/mercure
-      environment:
-        JWT_KEY: "MyJwtSecret"
-        ALLOW_ANONYMOUS: 1
-        PUBLISH_ALLOWED_ORIGINS: "*"
-        CORS_ALLOWED_ORIGINS: "*"
-      networks:
-          - net
-          - proxynetwork
-      depends_on:
-          - proxynetwork
-          - redis
-      deploy:
-        labels:
-              - "traefik.enable=true"
-              - "traefik.http.routers.mercure-symfony.rule=Host(`mercure.symfony.lxc`)"
-              - "traefik.http.routers.mercure-symfony.entrypoints=web"
-              - "traefik.http.services.mercure-symfony.loadbalancer.server.port=80"
-    phpldapadmin:
-        image: osixia/phpldapadmin
-        networks:
-            - net
-            - proxynetwork
-        depends_on:
-            - openldap
-            - proxynetwork
-        deploy:
-          labels:
-                - "traefik.enable=true"
-                - "traefik.http.routers.phpldapadmin-symfony.rule=Host(`phpldapadmin.symfony.lxc`)"
-                - "traefik.http.routers.phpldapadmin-symfony.entrypoints=web"
-                - "traefik.http.services.phpldapadmin-symfony.loadbalancer.server.port=80"
-        environment:
-            PHPLDAPADMIN_LDAP_HOSTS: "openldap"
-            PHPLDAPADMIN_HTTPS: "false"
-    openldap:
-        image: osixia/openldap:1.4.0
-        networks:
-            - net
-        environment:
-            LDAP_LOG_LEVEL: "256"
-            LDAP_ORGANISATION: "Symfony Inc."
-            LDAP_DOMAIN: "symfony.lxc"
-            LDAP_BASE_DN: "dc=symfony,dc=lxc"
-            LDAP_ADMIN_PASSWORD: "admin"
-            LDAP_CONFIG_PASSWORD: "config"
-            LDAP_READONLY_USER: "false"
-            LDAP_READONLY_USER_USERNAME: "readonly"
-            LDAP_READONLY_USER_PASSWORD: "readonly"
-            LDAP_RFC2307BIS_SCHEMA: "false"
-            LDAP_BACKEND: "mdb"
-            LDAP_TLS: "true"
-            LDAP_TLS_CRT_FILENAME: "ldap.crt"
-            LDAP_TLS_KEY_FILENAME: "ldap.key"
-            LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
-            LDAP_TLS_ENFORCE: "false"
-            LDAP_TLS_CIPHER_SUITE: "SECURE256:-VERS-SSL3.0"
-            LDAP_TLS_PROTOCOL_MIN: "3.1"
-            LDAP_TLS_VERIFY_CLIENT: "demand"
-            LDAP_REPLICATION: "false"
-            #LDAP_REPLICATION_CONFIG_SYNCPROV: "binddn="cn=admin,cn=config" bindmethod=simple credentials=$LDAP_CONFIG_PASSWORD searchbase="cn=config" type=refreshAndPersist retry="60 +" timeout=1 starttls=critical"
-            #LDAP_REPLICATION_DB_SYNCPROV: "binddn="cn=admin,$LDAP_BASE_DN" bindmethod=simple credentials=$LDAP_ADMIN_PASSWORD searchbase="$LDAP_BASE_DN" type=refreshAndPersist interval=00:00:00:10 retry="60 +" timeout=1 starttls=critical"
-            #docker-compose.ymlLDAP_REPLICATION_HOSTS: "#PYTHON2BASH:['ldap://ldap.symfony.lxc','ldap://ldap2.symfony.lxc']"
-            KEEP_EXISTING_CONFIG: "false"
-            LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
-            LDAP_SSL_HELPER_PREFIX: "ldap"
-    mariadb:
-        image: mariadb:10.5.1
-        environment:
-            MYSQL_ROOT_PASSWORD: example
-            MYSQL_DATABASE: core
-            MYSQL_USER: siteinternet
-            MYSQL_PASSWORD: password
-            TZ: Europe/Paris
-        networks:
-            - net
-    apache:
-        image: httpd
-        depends_on:
-            - phpfpm
-        volumes:
-            - ${PWD}/apps:/var/www/
-            - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
-        networks:
-            - net
-            - proxynetwork
-        deploy:
-          labels:
-                - "traefik.enable=true"
-                - "traefik.http.routers.www-symfony.rule=Host(`symfony.lxc`, `www.symfony.lxc`)"
-                - "traefik.http.middlewares.wwwredirectregex.redirectregex.regex=^http://symfony.lxc/(.*)"
-                - "traefik.http.middlewares.wwwredirectregex.redirectregex.replacement=http://www.symfony.lxc/$${1}"
-                - "traefik.http.routers.www-symfony.entrypoints=web"
-                - "traefik.http.services.www-symfony.loadbalancer.server.port=80"
-    phpmyadmin:
-        image: phpmyadmin/phpmyadmin
-        environment:
-            PMA_HOST: mariadb
-            MYSQL_ROOT_PASSWORD: example
-        depends_on:
-            - mariadb
-        networks:
-            - net
-            - proxynetwork
-        deploy:
-          labels:
-                - "traefik.enable=true"
-                - "traefik.http.routers.phpmyadmin-symfony.rule=Host(`phpmyadmin.symfony.lxc`)"
-                - "traefik.http.routers.phpmyadmin-symfony.entrypoints=web"
-                - "traefik.http.services.phpmyadmin-symfony.loadbalancer.server.port=80"
-    phpfpm:
-        image: koromerzhin/phpfpm:latest-symfony-without-xdebug
-        depends_on:
-            - mariadb
-            - openldap
-            - mercure
-            - mailhog
-        volumes:
-            - ${PWD}/apps:/var/www/
-            - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
-        networks:
-            - net
+  redis:
+    image: redis:6.0.9
+    networks:
+      - net
+  mailhog:
+    image: mailhog/mailhog
+    networks:
+      - net
+      - proxynetwork
+    depends_on:
+      - proxynetwork
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mailhog-symfony.rule=Host(`mailhog.symfony.lxc`)"
+        - "traefik.http.routers.mailhog-symfony.entrypoints=web"
+        - "traefik.http.services.mailhog-symfony.loadbalancer.server.port=8025"
+  mercure:
+    image: dunglas/mercure
+    environment:
+      JWT_KEY: "MyJwtSecret"
+      ALLOW_ANONYMOUS: 1
+      PUBLISH_ALLOWED_ORIGINS: "*"
+      CORS_ALLOWED_ORIGINS: "*"
+    networks:
+      - net
+      - proxynetwork
+    depends_on:
+      - proxynetwork
+      - redis
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mercure-symfony.rule=Host(`mercure.symfony.lxc`)"
+        - "traefik.http.routers.mercure-symfony.entrypoints=web"
+        - "traefik.http.services.mercure-symfony.loadbalancer.server.port=80"
+  phpldapadmin:
+    image: osixia/phpldapadmin
+    networks:
+      - net
+      - proxynetwork
+    depends_on:
+      - openldap
+      - proxynetwork
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.phpldapadmin-symfony.rule=Host(`phpldapadmin.symfony.lxc`)"
+        - "traefik.http.routers.phpldapadmin-symfony.entrypoints=web"
+        - "traefik.http.services.phpldapadmin-symfony.loadbalancer.server.port=80"
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+  openldap:
+    image: osixia/openldap:1.4.0
+    networks:
+      - net
+    environment:
+      LDAP_LOG_LEVEL: "256"
+      LDAP_ORGANISATION: "Symfony Inc."
+      LDAP_DOMAIN: "symfony.lxc"
+      LDAP_BASE_DN: "dc=symfony,dc=lxc"
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_CONFIG_PASSWORD: "config"
+      LDAP_READONLY_USER: "false"
+      LDAP_READONLY_USER_USERNAME: "readonly"
+      LDAP_READONLY_USER_PASSWORD: "readonly"
+      LDAP_RFC2307BIS_SCHEMA: "false"
+      LDAP_BACKEND: "mdb"
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_ENFORCE: "false"
+      LDAP_TLS_CIPHER_SUITE: "SECURE256:-VERS-SSL3.0"
+      LDAP_TLS_PROTOCOL_MIN: "3.1"
+      LDAP_TLS_VERIFY_CLIENT: "demand"
+      LDAP_REPLICATION: "false"
+      #LDAP_REPLICATION_CONFIG_SYNCPROV: "binddn="cn=admin,cn=config" bindmethod=simple credentials=$LDAP_CONFIG_PASSWORD searchbase="cn=config" type=refreshAndPersist retry="60 +" timeout=1 starttls=critical"
+      #LDAP_REPLICATION_DB_SYNCPROV: "binddn="cn=admin,$LDAP_BASE_DN" bindmethod=simple credentials=$LDAP_ADMIN_PASSWORD searchbase="$LDAP_BASE_DN" type=refreshAndPersist interval=00:00:00:10 retry="60 +" timeout=1 starttls=critical"
+      #docker-compose.ymlLDAP_REPLICATION_HOSTS: "#PYTHON2BASH:['ldap://ldap.symfony.lxc','ldap://ldap2.symfony.lxc']"
+      KEEP_EXISTING_CONFIG: "false"
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+      LDAP_SSL_HELPER_PREFIX: "ldap"
+  mariadb:
+    image: mariadb:10.5.1
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: core
+      MYSQL_USER: siteinternet
+      MYSQL_PASSWORD: password
+      TZ: Europe/Paris
+    networks:
+      - net
+  apache:
+    image: httpd
+    depends_on:
+      - phpfpm
+    volumes:
+      - ${PWD}/apps:/var/www/
+      - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    networks:
+      - net
+      - proxynetwork
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.www-symfony.rule=Host(`symfony.lxc`, `www.symfony.lxc`)"
+        - "traefik.http.middlewares.wwwredirectregex.redirectregex.regex=^http://symfony.lxc/(.*)"
+        - "traefik.http.middlewares.wwwredirectregex.redirectregex.replacement=http://www.symfony.lxc/$${1}"
+        - "traefik.http.routers.www-symfony.entrypoints=web"
+        - "traefik.http.services.www-symfony.loadbalancer.server.port=80"
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: example
+    depends_on:
+      - mariadb
+    networks:
+      - net
+      - proxynetwork
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.phpmyadmin-symfony.rule=Host(`phpmyadmin.symfony.lxc`)"
+        - "traefik.http.routers.phpmyadmin-symfony.entrypoints=web"
+        - "traefik.http.services.phpmyadmin-symfony.loadbalancer.server.port=80"
+  phpfpm:
+    image: koromerzhin/phpfpm:latest-symfony-without-xdebug
+    depends_on:
+      - mariadb
+      - openldap
+      - mercure
+      - mailhog
+    volumes:
+      - ${PWD}/apps:/var/www/
+      - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    networks:
+      - net
