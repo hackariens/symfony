@@ -29,20 +29,6 @@
   "dependencies": {},
   "devDependencies": {
     "@symfony/webpack-encore": "0.31.0",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "all-contributors-cli": "6.19.0",
-    "dotenv": "8.2.0",
-    "gitmoji-changelog": "2.1.0",
-    "license-checker": "25.0.1",
-    "markdownlint-cli": "0.24.0",
-    "node-sass": "^4.14.1",
-    "readme-md-generator": "1.0.0",
-    "sass-loader": "^9.0.3",
-    "semantic-git-commit-cli": "3.7.0",
-=======
-=======
->>>>>>> 89d973e97a4387105099a3f45269a13604147a6e
     "all-contributors-cli": "^6.19.0",
     "dotenv": "8.2.0",
     "gitmoji-changelog": "^2.1.0",
@@ -52,10 +38,6 @@
     "readme-md-generator": "^1.0.0",
     "sass-loader": "^9.0.3",
     "semantic-git-commit-cli": "^3.7.0",
-<<<<<<< HEAD
->>>>>>> 78bb673 (:alembic: alembic: add sass)
-=======
->>>>>>> 89d973e97a4387105099a3f45269a13604147a6e
     "webpack-notifier": "1.8.0"
   }
 }
