@@ -10,10 +10,10 @@
     "readme": "readme",
     "licenses": "license-checker",
     "commit": "sgc",
-    "dev-server": "encore dev-server",
-    "dev": "encore dev",
-    "watch": "encore dev --watch",
-    "build": "encore production --progress"
+    "encore-dev-server": "encore dev-server",
+    "encore-dev": "encore dev",
+    "encore-watch": "encore dev --watch",
+    "encore-build": "encore production --progress"
   },
   "repository": {
     "type": "git",
@@ -28,14 +28,16 @@
   "homepage": "https://github.com/koromerzhin/template-symfony#readme",
   "dependencies": {},
   "devDependencies": {
-    "all-contributors-cli": "^6.19.0",
-    "gitmoji-changelog": "^2.1.0",
-    "license-checker": "^25.0.1",
-    "readme-md-generator": "^1.0.0",
-    "semantic-git-commit-cli": "^3.7.0",
     "@symfony/webpack-encore": "0.31.0",
+    "all-contributors-cli": "6.19.0",
     "dotenv": "8.2.0",
-    "markdownlint-cli": "^0.24.0",
+    "gitmoji-changelog": "2.1.0",
+    "license-checker": "25.0.1",
+    "markdownlint-cli": "0.24.0",
+    "node-sass": "^4.14.1",
+    "readme-md-generator": "1.0.0",
+    "sass-loader": "^9.0.3",
+    "semantic-git-commit-cli": "3.7.0",
     "webpack-notifier": "1.8.0"
   }
 }
