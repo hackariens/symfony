@@ -67,7 +67,7 @@ jobs:
           run: make env-prod
         - name: 'Check running containers'
           run: make docker-ls
-        - name: 'BDD MIGRATE'
-          run: make bdd-migrate
+        # - name: 'BDD MIGRATE'
+        #   run: make bdd-migrate
         # - name: 'Run the fixtures'
         #   run: make bdd-fixtures
