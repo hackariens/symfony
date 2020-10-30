@@ -121,6 +121,7 @@ linter: apps/vendor node_modules ## Launch all linter
 	@make linter-phpcpd -i
 	@make linter-phpcs -i
 	@make linter-phpmd -i
+	@make linter-readme -i
 
 linter-readme: node_modules ## linter README.md
 	@npm run linter-markdown README.md
