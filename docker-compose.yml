@@ -12,7 +12,7 @@ volumes:
 
 services:
     redis:
-      image: redis:6.0.8
+      image: redis:6.0.9
       networks:
         - net
     mailhog:
