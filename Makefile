@@ -87,6 +87,9 @@ docker-logs: ## logs docker
 docker-ls: ## docker service
 	@docker stack services $(STACK)
 
+docker-stop: ## docker stop
+	@docker stack rm $(STACK)
+
 encore-dev: node_modules ## créer les assets en version dev
 	@npm run encore-dev
 
