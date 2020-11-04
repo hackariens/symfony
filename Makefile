@@ -79,7 +79,7 @@ docker-image-pull: ## Get docker image
 	docker image pull mariadb:10.5.6
 	docker image pull httpd
 	docker image pull phpmyadmin/phpmyadmin
-	docker image pull koromerzhin/phpfpm:latest-symfony-without-xdebug
+	docker image pull koromerzhin/phpfpm:7.4.12-symfony
 
 docker-logs: ## logs docker
 	docker service logs -f --tail 100 --raw $(PHPFPM)
