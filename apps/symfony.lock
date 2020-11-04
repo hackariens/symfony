@@ -37,9 +37,6 @@
     "composer/package-versions-deprecated": {
         "version": "1.11.99"
     },
-    "composer/xdebug-handler": {
-        "version": "1.4.3"
-    },
     "dama/doctrine-test-bundle": {
         "version": "4.0",
         "recipe": {
@@ -140,9 +137,6 @@
     "doctrine/persistence": {
         "version": "2.0.0"
     },
-    "doctrine/reflection": {
-        "version": "1.2.1"
-    },
     "doctrine/sql-formatter": {
         "version": "1.1.1"
     },
@@ -206,9 +200,6 @@
     "ocramius/proxy-manager": {
         "version": "2.8.0"
     },
-    "pdepend/pdepend": {
-        "version": "2.8.0"
-    },
     "php": {
         "version": "7.4.2"
     },
@@ -223,9 +214,6 @@
     },
     "phpdocumentor/type-resolver": {
         "version": "1.4.0"
-    },
-    "phpmd/phpmd": {
-        "version": "2.9.1"
     },
     "phpstan/phpstan": {
         "version": "0.12.50"
