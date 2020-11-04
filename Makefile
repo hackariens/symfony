@@ -13,11 +13,20 @@ APACHEFULLNAME  := $(APACHE).1.$$(docker service ps -f 'name=$(APACHE)' $(APACHE
 help:
 	@grep -E '(^[a-zA-Z_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 
-apps/vendor:
-	@make composer-dev -i
+package-lock.json: package.json
+	npm install
 
-apps/.env: ## Install .env
-	cp apps/.env.dist apps/.env
+node_modules: package-lock.json
+	npm install
+
+apps/composer.lock: apps/composer.json
+	docker exec $(PHPFPMFULLNAME) make composer.lock
+	
+apps/vendor: apps/composer.lock
+	docker exec $(PHPFPMFULLNAME) make vendor
+
+apps/.env: apps/.env.dist ## Install .env
+	docker exec $(PHPFPMFULLNAME) make .env
 
 bdd-fixtures: vendor ## fixtures
 	docker exec $(PHPFPMFULLNAME) make bdd-fixtures
@@ -34,12 +43,6 @@ composer-suggests: ## suggestions package pour PHP
 composer-outdated: ## Packet php outdated
 	docker exec $(PHPFPMFULLNAME) make composer-outdated
 
-composer-prod: ## Installation version de production
-	docker exec $(PHPFPMFULLNAME) make composer-prod
-
-composer-dev: ## Installation version de dev
-	docker exec $(PHPFPMFULLNAME) make composer-dev
-
 composer-dev-ci: ## Installation version de dev
 	cd apps && make composer-dev
 
@@ -52,16 +55,16 @@ composer-validate: ## COMPOSER validate
 composer-validate-ci: ## COMPOSER validate
 	cd apps && make composer-validate
 
-contributors: node_modules ## Contributors
+contributors: ## Contributors
 	@npm run contributors
 
-contributors-add: node_modules ## add Contributors
+contributors-add: ## add Contributors
 	@npm run contributors add
 
-contributors-check: node_modules ## check Contributors
+contributors-check: ## check Contributors
 	@npm run contributors check
 
-contributors-generate: node_modules ## generate Contributors
+contributors-generate: ## generate Contributors
 	@npm run contributors generate
 
 docker-create-network: ## create network
@@ -90,7 +93,7 @@ docker-ls: ## docker service
 docker-stop: ## docker stop
 	@docker stack rm $(STACK)
 
-encore-dev: node_modules ## créer les assets en version dev
+encore-dev: ## créer les assets en version dev
 	@npm run encore-dev
 
 env-dev: apps/.env ## Installation environnement dev
@@ -101,10 +104,10 @@ env-prod: apps/.env ## Installation environnement prod
 	rm -rf apps/vendor
 	@make composer-prod -i
 
-git-commit: node_modules ## Commit data
+git-commit: ## Commit data
 	npm run commit
 
-git-check: node_modules ## CHECK before
+git-check: ## CHECK before
 	@make composer-validate -i
 	@make composer-outdated -i
 	@make bdd-validate
@@ -129,7 +132,7 @@ linter: apps/vendor node_modules ## Launch all linter
 	@make linter-phpmd -i
 	@make linter-readme -i
 
-linter-readme: node_modules ## linter README.md
+linter-readme: ## linter README.md
 	@npm run linter-markdown README.md
 
 linter-phpcbf: apps/vendor ## fixe le code PHP à partir d'un standard
@@ -188,9 +191,6 @@ logs-mariadb: ## logs docker MARIADB
 
 logs-phpfpm: ## logs docker PHPFPM
 	docker service logs -f --tail 100 --raw $(PHPFPMFULLNAME)
-
-node_modules: ## npm install
-	npm install
 
 sleep: ## sleep
 	sleep 90
