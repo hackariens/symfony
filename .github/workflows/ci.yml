@@ -50,24 +50,3 @@ jobs:
         run: make tests-behat-ci
       - name: Run Tests
         run: make tests-simple-phpunit-unit-integration-ci
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-        - name: Checkout
-          uses: actions/checkout@v2
-        - name: 'Docker swarm init'
-          run: docker swarm init --default-addr-pool 10.20.0.0/16
-        - name: 'Create proxy network'
-          run: make docker-create-network
-        - name: 'Build containers'
-          run: make docker-deploy
-        - name: 'Make sleep'
-          run: make sleep
-        - name: 'Installation version PROD'
-          run: make env-prod
-        - name: 'Check running containers'
-          run: make docker-ls
-        # - name: 'BDD MIGRATE'
-        #   run: make bdd-migrate
-        # - name: 'Run the fixtures'
-        #   run: make bdd-fixtures
