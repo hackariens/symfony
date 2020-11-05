@@ -53,8 +53,10 @@ jobs:
         run: make linter-phpmnd-ci
       - name: Test lancement bootstrap
         run: make encore-dev
-      - name: Run twigcs
-        run: make linter-twigcs-ci
+      - name: Run twig
+        run: make linter-twig-ci
+      - name: Linter yaml
+        run: make linter-yaml-ci
       - name: Run phpstan
         run: make linter-phpstan-ci
       - name: Run Acceptance Tests

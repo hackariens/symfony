@@ -22,10 +22,7 @@ phpcpd.phar:
 	wget https://phar.phpunit.de/phpcpd.phar
 
 phpmd.phar:
-	wget https://phar.phpunit.de/phpmd.phar
-
-twigcs.phar:
-	wget https://github.com/friendsoftwig/twigcs/releases/download/v3.2.2/twigcs.phar
+	wget https://github.com/phpmd/phpmd/releases/download/2.9.1/phpmd.phar
 
 bdd-fixtures: ## fixtures
 	php bin/console doctrine:fixtures:load -n
@@ -89,8 +86,11 @@ linter-phpmnd: vendor ## Si des chiffres sont utilisé dans le code PHP, il est 
 linter-phpstan: vendor ## regarde si le code PHP ne peux pas être optimisé
 	composer run phpstan
 
-linter-twigcs: twigcs.phar ## indique les erreurs de code de twig
-	php twigcs.phar templates
+linter-twig: ## indique les erreurs de code de twig
+	php bin/console lint:twig templates
+
+linter-yaml: ## indique les erreurs de code de yaml
+	php bin/console lint:yaml config
 
 tests-behat: vendor ## Lance les tests behat
 	composer run behat
