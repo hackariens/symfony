@@ -60,19 +60,19 @@ env-prod: .env ## Installation environnement prod
 	@make composer-prod -i
 
 linter-phpcbf: vendor ## fixe le code PHP à partir d'un standard
-	composer run phpcbf
+	COMPOSER_MEMORY_LIMIT=-1 composer run phpcbf
 
 linter-phpcpd: phpcpd.phar ## Vérifie s'il y a du code dupliqué
 	php phpcpd.phar src tests
 
 linter-phpcs: vendor ## indique les erreurs de code non corrigé par PHPCBF
-	composer run phpcs
+	COMPOSER_MEMORY_LIMIT=-1 composer run phpcs
 
 linter-phpcs-onlywarning: vendor ## indique les erreurs de code non corrigé par PHPCBF
-	composer run phpcs-onlywarning
+	COMPOSER_MEMORY_LIMIT=-1 composer run phpcs-onlywarning
 
 linter-phpcs-onlyerror: vendor ## indique les erreurs de code non corrigé par PHPCBF
-	composer run phpcs-onlyerror
+	COMPOSER_MEMORY_LIMIT=-1 composer run phpcs-onlyerror
 
 linter-phploc: phploc.phar ## analyse with PHPLOC
 	php phploc.phar src
@@ -81,10 +81,10 @@ linter-phpmd: phpmd.phar ## indique quand le code PHP contient des erreurs de sy
 	php phpmd.phar src,features/bootstrap,tests ansi phpmd.xml
 
 linter-phpmnd: vendor ## Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes
-	composer run phpmnd
+	COMPOSER_MEMORY_LIMIT=-1 composer run phpmnd
 
 linter-phpstan: vendor ## regarde si le code PHP ne peux pas être optimisé
-	composer run phpstan
+	COMPOSER_MEMORY_LIMIT=-1 composer run phpstan
 
 linter-twig: ## indique les erreurs de code de twig
 	php bin/console lint:twig templates
@@ -93,14 +93,14 @@ linter-yaml: ## indique les erreurs de code de yaml
 	php bin/console lint:yaml config
 
 tests-behat: vendor ## Lance les tests behat
-	composer run behat
+	COMPOSER_MEMORY_LIMIT=-1 composer run behat
 
 tests-launch: vendor ## Launch all tests
 	@make tests-behat -i
 	@make tests-simple-phpunit -i
 
 tests-simple-phpunit: vendor ## lance les tests phpunit
-	composer run simple-phpunit
+	COMPOSER_MEMORY_LIMIT=-1 composer run simple-phpunit
 
 tests-simple-phpunit-unit-integration: vendor ## lance les tests phpunit
-	composer run simple-phpunit-unit-integration
+	COMPOSER_MEMORY_LIMIT=-1 composer run simple-phpunit-unit-integration

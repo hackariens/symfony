@@ -42,11 +42,19 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
+      - name: 'Create folders'
+        run: |
+          make dump
+          make mariadb_data
+      - name: 'Installation variable environnement'
+        run: make env-dev
+      - name: 'sleep'
+        run: make sleep 60
+      - name: 'docker ls'
+        run: make docker-ls
       - name: Install npm dependencies
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: make node_modules
-      - name: Validate composer.json
-        run: make composer-validate-ci
       - name: Install Composer dependencies
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make composer-dev-ci

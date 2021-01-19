@@ -19,6 +19,12 @@ package-lock.json: package.json
 node_modules: package-lock.json
 	npm install
 
+dump:
+	mkdir dump
+
+mariadb_data:
+	mkdir mariadb_data
+
 apps/composer.lock: apps/composer.json
 	docker exec $(PHPFPMFULLNAME) make composer.lock
 	
@@ -26,7 +32,7 @@ apps/vendor: apps/composer.lock
 	docker exec $(PHPFPMFULLNAME) make vendor
 
 apps/.env: apps/.env.dist ## Install .env
-	docker exec $(PHPFPMFULLNAME) make .env
+	cp apps/.env.dist apps/.env
 
 bdd-fixtures: vendor ## fixtures
 	docker exec $(PHPFPMFULLNAME) make bdd-fixtures
@@ -114,7 +120,7 @@ git-check: ## CHECK before
 	@make contributors-check -i
 	@git status
 
-install: node_modules apps/.env ## installation
+install: dump mariadb_data node_modules apps/.env ## installation
 	@make docker-deploy -i
 	@make sleep -i
 	@make linter -i
