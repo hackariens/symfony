@@ -75,8 +75,8 @@ jobs:
       #   run: make linter phpstan
       - name: 'Composer install'
         run: make composer dev
-      - name: 'BDD MIGRATE'
-        run: make bdd migrate
+      # - name: 'BDD MIGRATE'
+      #   run: make bdd migrate
       - name: 'Run the fixtures'
         run: make bdd fixtures
       - name: Run Acceptance Tests
