@@ -13,9 +13,9 @@ jobs:
         uses: actions/checkout@v2
         run: docker swarm init --default-addr-pool 10.20.0.0/16
       - name: 'Create proxy network'
-        run: make docker-create-network
+        run: make docker create-network
       - name: 'Build containers'
-        run: make docker-deploy
+        run: make docker deploy
       - name: 'Installation version PROD'
         run: make env-prod
       - name: Setup PHP, with composer and extensions
@@ -33,15 +33,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       - name: Cache Composer packages
-        id: composer-cache
+        id: composer cache
         uses: actions/cache@v2
         with:
           path: |
             apps/bin
             apps/vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
+          key: ${{ runner.os }}-composer ${{ hashFiles('**/apps/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-composer-
+            ${{ runner.os }}-composer 
       - name: 'Create folders'
         run: |
           make dump
@@ -51,30 +51,30 @@ jobs:
       - name: 'sleep'
         run: make sleep 60
       - name: 'docker ls'
-        run: make docker-ls
+        run: make docker ls
       - name: Install npm dependencies
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: make node_modules
       - name: Install Composer dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: make composer-dev-ci
+        if: steps.composer cache.outputs.cache-hit != 'true'
+        run: make composer dev
       - name: linter readme.md
         run: make linter-readme
       - name: Run PHP Code Sniffer
-        run: make linter-phpcs-onlyerror-ci
+        run: make linter-phpcs-onlyerror
       - name: Run PHP MD
-        run: make linter-phpmd-ci
+        run: make linter-phpmd
       - name: Run PHPMND
-        run: make linter-phpmnd-ci
+        run: make linter-phpmnd
       - name: Test lancement bootstrap
         run: make encore-dev
       - name: Run twig
-        run: make linter-twig-ci
+        run: make linter-twig
       - name: Linter yaml
-        run: make linter-yaml-ci
+        run: make linter-yaml
       - name: Run phpstan
-        run: make linter-phpstan-ci
+        run: make linter-phpstan
       - name: Run Acceptance Tests
-        run: make tests-behat-ci
+        run: make tests-behat
       - name: Run Tests
-        run: make tests-simple-phpunit-unit-integration-ci
+        run: make tests-simple-phpunit-unit-integration
