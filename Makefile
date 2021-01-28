@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-STACK         := labstag
+STACK         := symfony
 NETWORK       := proxynetwork
 
 REDIS         := $(STACK)_redis
