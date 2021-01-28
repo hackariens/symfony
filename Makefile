@@ -367,19 +367,19 @@ endif
 
 service-update: ## docker service update
 ifeq ($(COMMAND_ARGS),redis)
-	docker service update $(REDIS)
+	@docker service update $(REDIS)
 else ifeq ($(COMMAND_ARGS),mailhog)
-	docker service update $(MAILHOG)
+	@docker service update $(MAILHOG)
 else ifeq ($(COMMAND_ARGS),mercure)
-	docker service update $(MERCURE)
+	@docker service update $(MERCURE)
 else ifeq ($(COMMAND_ARGS),mariadb)
-	docker service update $(MARIADB)
+	@docker service update $(MARIADB)
 else ifeq ($(COMMAND_ARGS),apache)
-	docker service update $(APACHE)
+	@docker service update $(APACHE)
 else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	docker service update $(PHPMYADMIN)
+	@docker service update $(PHPMYADMIN)
 else ifeq ($(COMMAND_ARGS),phpfpm)
-	docker service update $(PHPFPM)
+	@docker service update $(PHPFPM)
 else
 	@echo "ARGUMENT missing"
 	@echo "---"
