@@ -77,7 +77,7 @@ jobs:
         run: make composer dev
       # - name: 'BDD MIGRATE'
       #   run: make bdd migrate
-      - name: 'Run the fixtures'
-        run: make bdd fixtures
+      # - name: 'Run the fixtures'
+      #   run: make bdd fixtures
       - name: Run Acceptance Tests
         run: make tests behat
