@@ -25,7 +25,7 @@ PHPFPMFULLNAME := $(PHPFPM).1.$$(docker service ps -f 'name=$(PHPFPM)' $(PHPFPM)
 
 DOCKER_EXECPHP := @docker exec $(PHPFPMFULLNAME)
 
-SUPPORTED_COMMANDS := bdd composer contributors docker encore env geocode git inspect install linter logs messenger sleep ssh tests workflow-png
+SUPPORTED_COMMANDS := bdd composer contributors docker encore env geocode git inspect install linter logs messenger sleep ssh tests workflow-png update inspect
 SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
 ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   COMMAND_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -417,6 +417,64 @@ else
 	@echo "ARGUMENT missing"
 	@echo "---"
 	@echo "make ssh ARGUMENT"
+	@echo "---"
+	@echo "redis: REDIS"
+	@echo "mailhot: MAILHOG"
+	@echo "mercure: MERCURE"
+	@echo "mariadb: MARIADB"
+	@echo "apache: APACHE"
+	@echo "phpmyadmin: PHPMYADMIN"
+	@echo "phpfpm: PHPFPM"
+endif
+
+update: ## update
+ifeq ($(COMMAND_ARGS),redis)
+	@docker service update $(REDIS)
+else ifeq ($(COMMAND_ARGS),mailhog)
+	@docker service update $(MAILHOG)
+else ifeq ($(COMMAND_ARGS),mercure)
+	@docker service update $(MERCURE)
+else ifeq ($(COMMAND_ARGS),mariadb)
+	@docker service update $(MARIADB)
+else ifeq ($(COMMAND_ARGS),apache)
+	@docker service update $(APACHE)
+else ifeq ($(COMMAND_ARGS),phpmyadmin)
+	@docker service update $(PHPMYADMIN)
+else ifeq ($(COMMAND_ARGS),phpfpm)
+	@docker service update $(PHPFPM)
+else
+	@echo "ARGUMENT missing"
+	@echo "---"
+	@echo "make update ARGUMENT"
+	@echo "---"
+	@echo "redis: REDIS"
+	@echo "mailhot: MAILHOG"
+	@echo "mercure: MERCURE"
+	@echo "mariadb: MARIADB"
+	@echo "apache: APACHE"
+	@echo "phpmyadmin: PHPMYADMIN"
+	@echo "phpfpm: PHPFPM"
+endif
+
+inspect: ## ispect
+ifeq ($(COMMAND_ARGS),redis)
+	@docker service inspect $(REDIS)
+else ifeq ($(COMMAND_ARGS),mailhog)
+	@docker service inspect $(MAILHOG)
+else ifeq ($(COMMAND_ARGS),mercure)
+	@docker service inspect $(MERCURE)
+else ifeq ($(COMMAND_ARGS),mariadb)
+	@docker service inspect $(MARIADB)
+else ifeq ($(COMMAND_ARGS),apache)
+	@docker service inspect $(APACHE)
+else ifeq ($(COMMAND_ARGS),phpmyadmin)
+	@docker service inspect $(PHPMYADMIN)
+else ifeq ($(COMMAND_ARGS),phpfpm)
+	@docker service inspect $(PHPFPM)
+else
+	@echo "ARGUMENT missing"
+	@echo "---"
+	@echo "make inspect ARGUMENT"
 	@echo "---"
 	@echo "redis: REDIS"
 	@echo "mailhot: MAILHOG"
