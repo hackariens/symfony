@@ -11,19 +11,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: 'Docker swarm init'
         run: docker swarm init --default-addr-pool 10.20.0.0/16
       - name: 'Create proxy network'
         run: make docker create-network
       - name: 'Build containers'
         run: make docker deploy
-      - name: 'Installation version PROD'
-        run: make env-prod
       - name: Setup PHP, with composer and extensions
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, intl
           coverage: xdebug
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            apps/bin
+            apps/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
       - name: Cache npm packages
         id: npm-cache
         uses: actions/cache@v2
@@ -32,22 +41,10 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - name: Cache Composer packages
-        id: composer cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            apps/bin
-            apps/vendor
-          key: ${{ runner.os }}-composer ${{ hashFiles('**/apps/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer 
       - name: 'Create folders'
-        run: |
-          make dump
-          make mariadb_data
+        run: make folders
       - name: 'Installation variable environnement'
-        run: make env-dev
+        run: make env dev
       - name: 'sleep'
         run: make sleep 60
       - name: 'docker ls'
@@ -56,25 +53,31 @@ jobs:
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: make node_modules
       - name: Install Composer dependencies
-        if: steps.composer cache.outputs.cache-hit != 'true'
+        if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make composer dev
       - name: linter readme.md
-        run: make linter-readme
-      - name: Run PHP Code Sniffer
-        run: make linter-phpcs-onlyerror
-      - name: Run PHP MD
-        run: make linter-phpmd
-      - name: Run PHPMND
-        run: make linter-phpmnd
+        run: make linter readme
+      - name: linter PHP Code Sniffer
+        run: make linter phpcs-onlyerror
+      - name: linter PHP MD
+        run: make linter phpmd
+      - name: linter PHPMND
+        run: make linter phpmnd
+      - name: Add assets
+        run: make assets
       - name: Test lancement bootstrap
-        run: make encore-dev
-      - name: Run twig
-        run: make linter-twig
+        run: make encore dev
+      - name: Linter twig
+        run: make linter twig
       - name: Linter yaml
-        run: make linter-yaml
-      - name: Run phpstan
-        run: make linter-phpstan
+        run: make linter yaml
+      # - name: linter phpstan
+      #   run: make linter phpstan
+      - name: 'Composer install'
+        run: make composer dev
+      - name: 'BDD MIGRATE'
+        run: make bdd migrate
+      - name: 'Run the fixtures'
+        run: make bdd fixtures
       - name: Run Acceptance Tests
-        run: make tests-behat
-      - name: Run Tests
-        run: make tests-simple-phpunit-unit-integration
+        run: make tests behat
