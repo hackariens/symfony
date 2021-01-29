@@ -30,8 +30,7 @@ docker swarm
 
 Hosts:
 
-- 127.0.0.1 symfony.lxc
-- 127.0.0.1 www.symfony.lxc
+- symfony.traefik.me
 
 ## Récupérer les images docker
 
