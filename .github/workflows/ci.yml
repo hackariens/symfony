@@ -43,8 +43,6 @@ jobs:
             ${{ runner.os }}-node
       - name: 'Create folders'
         run: make folders
-      - name: 'Installation variable environnement'
-        run: make env dev
       - name: 'sleep'
         run: make sleep 60
       - name: 'docker ls'
