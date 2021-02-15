@@ -456,35 +456,6 @@ else
 	@echo "phpfpm: PHPFPM"
 endif
 
-inspect: ## ispect
-ifeq ($(COMMAND_ARGS),redis)
-	@docker service inspect $(REDIS)
-else ifeq ($(COMMAND_ARGS),mailhog)
-	@docker service inspect $(MAILHOG)
-else ifeq ($(COMMAND_ARGS),mercure)
-	@docker service inspect $(MERCURE)
-else ifeq ($(COMMAND_ARGS),mariadb)
-	@docker service inspect $(MARIADB)
-else ifeq ($(COMMAND_ARGS),apache)
-	@docker service inspect $(APACHE)
-else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	@docker service inspect $(PHPMYADMIN)
-else ifeq ($(COMMAND_ARGS),phpfpm)
-	@docker service inspect $(PHPFPM)
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make inspect ARGUMENT"
-	@echo "---"
-	@echo "redis: REDIS"
-	@echo "mailhot: MAILHOG"
-	@echo "mercure: MERCURE"
-	@echo "mariadb: MARIADB"
-	@echo "apache: APACHE"
-	@echo "phpmyadmin: PHPMYADMIN"
-	@echo "phpfpm: PHPFPM"
-endif
-
 tests: ## Scripts tests
 ifeq ($(COMMAND_ARGS),launch)
 	@docker exec $(PHPFPMFULLNAME) make tests all
