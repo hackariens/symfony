@@ -29,9 +29,12 @@
       "profile": "https://renovate.whitesourcesoftware.com/",
       "contributions": [
         "bug",
+        "code",
+        "infra",
         "maintenance",
         "platform",
         "review",
+        "security",
         "tool"
       ]
     },
@@ -42,9 +45,12 @@
       "profile": "https://restyled.io/",
       "contributions": [
         "bug",
+        "code",
+        "infra",
         "maintenance",
         "platform",
         "review",
+        "security",
         "tool"
       ]
     }
