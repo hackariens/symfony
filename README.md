@@ -16,6 +16,7 @@
 Software:
 
 - make
+- npm
 - docker
 - repository koromerzhin/traefikproxy
 
