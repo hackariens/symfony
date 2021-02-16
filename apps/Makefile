@@ -1,8 +1,5 @@
 .DEFAULT_GOAL   := help
 
-%:
-	@:
-
 SUPPORTED_COMMANDS   := bdd composer contributors encore env geocode git install linter logs messenger sleep ssh tests workflow-png
 SUPPORTS_MAKE_ARGS   := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
 ifneq "$(SUPPORTS_MAKE_ARGS)" ""

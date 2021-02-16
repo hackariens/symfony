@@ -1,3 +1,5 @@
+isDocker := $(shell docker info > /dev/null 2>&1 && echo 1)
+
 .DEFAULT_GOAL := help
 STACK         := symfony
 NETWORK       := proxynetwork
@@ -32,23 +34,23 @@ ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   $(eval $(COMMAND_ARGS):;@:)
 endif
 
-%:
-	@:
-
 help:
 	@grep -E '(^[a-zA-Z_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 
 package-lock.json: package.json
 	@npm install
 
+isdocker: ## Docker is launch
+ifeq ($(isDocker), 0)
+	@echo "Docker is not launch"
+	exit 1
+endif
+
 node_modules: package-lock.json
 	@npm install
 
 dump:
 	@mkdir dump
-
-mariadb_data:
-	@mkdir mariadb_data
 
 apps/composer.lock: apps/composer.json
 	$(DOCKER_EXECPHP) make composer.lock
@@ -59,10 +61,10 @@ apps/vendor: apps/composer.lock
 apps/.env: apps/.env.dist ## Install .env
 	@cp apps/.env.dist apps/.env
 
-assets:
+assets: isdocker
 	$(DOCKER_EXECPHP) make assets
 
-bdd: ## Scripts for BDD
+bdd: isdocker ## Scripts for BDD
 ifeq ($(COMMAND_ARGS),fixtures)
 	$(DOCKER_EXECPHP) make bdd fixtures
 else ifeq ($(COMMAND_ARGS),migrate)
@@ -79,7 +81,7 @@ else
 	@echo "validate: bdd validate"
 endif
 
-composer: ## Scripts for composer
+composer: isdocker ## Scripts for composer
 ifeq ($(COMMAND_ARGS),suggests)
 	$(DOCKER_EXECPHP) make composer suggests
 else ifeq ($(COMMAND_ARGS),outdated)
@@ -108,7 +110,7 @@ else
 	@echo "validate: COMPOSER validate"
 endif
 
-contributors: ## Contributors
+contributors: node_modules ## Contributors
 ifeq ($(COMMAND_ARGS),add)
 	@npm run contributors add
 else ifeq ($(COMMAND_ARGS),check)
@@ -119,7 +121,7 @@ else
 	@npm run contributors
 endif
 
-docker: ## Scripts docker
+docker: isdocker ## Scripts docker
 ifeq ($(COMMAND_ARGS),create-network)
 	@docker network create --driver=overlay $(NETWORK)
 else ifeq ($(COMMAND_ARGS),deploy)
@@ -148,7 +150,7 @@ else
 	@echo "stop: docker stop"
 endif
 
-encore: ## Script for Encore
+encore: node_modules ## Script for Encore
 ifeq ($(COMMAND_ARGS),dev)
 	@npm rebuild node-sass
 	@npm run encore-dev
@@ -163,7 +165,7 @@ else
 	@echo "watch: créer les assets en version watch"
 endif
 
-folders: mariadb_data dump ## Create folder
+folders: dump ## Create folder
 
 env: apps/.env ## Scripts Installation environnement
 ifeq ($(COMMAND_ARGS),dev)
@@ -181,10 +183,10 @@ else
 	@echo "prod: environnement prod"
 endif
 
-geocode: ## Geocode
+geocode: isdocker ## Geocode
 	$(DOCKER_EXECPHP) make geocode $(COMMAND_ARGS)
 
-git: ## Scripts GIT
+git: node_modules ## Scripts GIT
 ifeq ($(COMMAND_ARGS),commit)
 	@npm run commit
 else ifeq ($(COMMAND_ARGS),status)
@@ -206,7 +208,7 @@ else
 	@echo "status: status"
 endif
 
-inspect: ## docker service inspect
+inspect: isdocker ## docker service inspect
 ifeq ($(COMMAND_ARGS),redis)
 	@docker service inspect $(REDIS)
 else ifeq ($(COMMAND_ARGS),mailhog)
@@ -258,7 +260,7 @@ else
 	@echo "dev: dev"
 endif
 
-linter: ## Scripts Linter
+linter: node_modules isdocker## Scripts Linter
 ifeq ($(COMMAND_ARGS),all)
 	@make linter eslint -i
 	@make linter twig -i
@@ -322,7 +324,7 @@ else
 	@echo "yaml: indique les erreurs de code de yaml"
 endif
 
-logs: ## Scripts logs
+logs: isdocker ## Scripts logs
 ifeq ($(COMMAND_ARGS),stack)
 	@docker service logs -f --tail 100 --raw $(STACK)
 else ifeq ($(COMMAND_ARGS),redis)
@@ -354,7 +356,7 @@ else
 	@echo "phpfpm: PHPFPM"
 endif
 
-messenger: ## Scripts messenger
+messenger: isdocker ## Scripts messenger
 ifeq ($(COMMAND_ARGS),consule)
 	$(DOCKER_EXECPHP) make messenger consume
 else
@@ -365,40 +367,10 @@ else
 	@echo "consume: Messenger Consume"
 endif
 
-service-update: ## docker service update
-ifeq ($(COMMAND_ARGS),redis)
-	@docker service update $(REDIS)
-else ifeq ($(COMMAND_ARGS),mailhog)
-	@docker service update $(MAILHOG)
-else ifeq ($(COMMAND_ARGS),mercure)
-	@docker service update $(MERCURE)
-else ifeq ($(COMMAND_ARGS),mariadb)
-	@docker service update $(MARIADB)
-else ifeq ($(COMMAND_ARGS),apache)
-	@docker service update $(APACHE)
-else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	@docker service update $(PHPMYADMIN)
-else ifeq ($(COMMAND_ARGS),phpfpm)
-	@docker service update $(PHPFPM)
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make service-update ARGUMENT"
-	@echo "---"
-	@echo "stack: logs stack"
-	@echo "redis: REDIS"
-	@echo "mailhot: MAILHOG"
-	@echo "mercure: MERCURE"
-	@echo "mariadb: MARIADB"
-	@echo "apache: APACHE"
-	@echo "phpmyadmin: PHPMYADMIN"
-	@echo "phpfpm: PHPFPM"
-endif
-
 sleep: ## sleep
 	@sleep  $(COMMAND_ARGS)
 
-ssh: ## SSH
+ssh: isdocker ## SSH
 ifeq ($(COMMAND_ARGS),redis)
 	@docker exec -it $(REDISFULLNAME) /bin/bash
 else ifeq ($(COMMAND_ARGS),mailhog)
@@ -427,7 +399,7 @@ else
 	@echo "phpfpm: PHPFPM"
 endif
 
-update: ## update
+update: isdocker ## update
 ifeq ($(COMMAND_ARGS),redis)
 	@docker service update $(REDIS)
 else ifeq ($(COMMAND_ARGS),mailhog)
@@ -456,7 +428,7 @@ else
 	@echo "phpfpm: PHPFPM"
 endif
 
-tests: ## Scripts tests
+tests: isdocker ## Scripts tests
 ifeq ($(COMMAND_ARGS),launch)
 	@docker exec $(PHPFPMFULLNAME) make tests all
 else ifeq ($(COMMAND_ARGS),behat)
@@ -476,8 +448,8 @@ else
 	@echo "simple-phpunit: lance les tests phpunit"
 endif
 
-translations: ## update translation
+translations: isdocker ## update translation
 	$(DOCKER_EXECPHP) make translations
 
-workflow-png: ## generate workflow png
+workflow-png: isdocker ## generate workflow png
 	$(DOCKER_EXECPHP) make workflow-png $(COMMAND_ARGS)
