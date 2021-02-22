@@ -54,7 +54,7 @@ services:
         - "traefik.http.routers.mercure-symfony-tls.tls.domains[0].sans=mercure-symfony-*.traefik.me"
         - "traefik.http.services.mercure-symfony.loadbalancer.server.port=80"
   mariadb:
-    image: mariadb:10.5.6
+    image: mariadb:10.5.9
     environment:
       MYSQL_ROOT_PASSWORD: example
       MYSQL_DATABASE: core
