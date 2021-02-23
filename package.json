@@ -38,6 +38,6 @@
     "readme-md-generator": "1.0.0",
     "sass-loader": "9.0.3",
     "semantic-git-commit-cli": "3.7.0",
-    "webpack-notifier": "1.8.0"
+    "webpack-notifier": "1.13.0"
   }
 }
