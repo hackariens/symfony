@@ -128,7 +128,7 @@ ifeq ($(COMMAND_ARGS),create-network)
 else ifeq ($(COMMAND_ARGS),deploy)
 	@docker stack deploy -c docker-compose.yml $(STACK)
 else ifeq ($(COMMAND_ARGS),image-pull)
-	@docker image pull redis:6.0.9
+	@docker image pull redis:6.2.0
 	@docker image pull mariadb:10.5.9
 	@docker image pull httpd:2.4.46
 	@docker image pull phpmyadmin:5.0.2
