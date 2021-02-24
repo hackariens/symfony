@@ -9,7 +9,6 @@
     "changelog": "gitmoji-changelog",
     "readme": "readme",
     "licenses": "license-checker",
-    "commit": "sgc",
     "encore-dev-server": "encore dev-server",
     "encore-dev": "encore dev",
     "encore-watch": "encore dev --watch",
@@ -37,7 +36,6 @@
     "node-sass": "4.14.1",
     "readme-md-generator": "1.0.0",
     "sass-loader": "9.0.3",
-    "semantic-git-commit-cli": "3.7.0",
     "webpack-notifier": "1.13.0"
   }
 }
