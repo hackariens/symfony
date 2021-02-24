@@ -11,6 +11,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Cache npm packages
+        id: npm-cache
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node
+      - name: Install npm dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: make node_modules
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            apps/bin
+            apps/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
       - name: 'Create folders'
         run: make folders
       - name: 'Docker swarm init'
@@ -29,27 +50,6 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, intl
           coverage: xdebug
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            apps/bin
-            apps/vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-      - name: Cache npm packages
-        id: npm-cache
-        uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node
-      - name: Install npm dependencies
-        if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: make node_modules
       - name: Install Composer dependencies
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make composer dev
