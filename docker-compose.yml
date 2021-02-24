@@ -19,7 +19,7 @@ services:
       labels:
         - "traefik.enable=false"
   mailhog:
-    image: mailhog/mailhog
+    image: mailhog/mailhog:v1.0.1
     networks:
       - net
       - proxynetwork
@@ -67,7 +67,7 @@ services:
       labels:
         - "traefik.enable=false"
   apache:
-    image: httpd
+    image: httpd:2.4.46
     depends_on:
       - phpfpm
     volumes:
@@ -84,7 +84,7 @@ services:
         - "traefik.http.routers.symfony-tls.tls.domains[0].sans=symfony-*.traefik.me"
         - "traefik.http.services.symfony.loadbalancer.server.port=80"
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin:5.1.0
     environment:
       PMA_HOST: mariadb
       MYSQL_ROOT_PASSWORD: example
