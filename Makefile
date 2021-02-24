@@ -4,8 +4,8 @@ isDocker := $(shell docker info > /dev/null 2>&1 && echo 1)
 STACK         := symfony
 NETWORK       := proxynetwork
 
-REDIS         := $(STACK)_redis
-REDISFULLNAME := $(REDIS).1.$$(docker service ps -f 'name=$(REDIS)' $(REDIS) -q --no-trunc | head -n1)
+WWW         := $(STACK)_www
+WWWFULLNAME := $(WWW).1.$$(docker service ps -f 'name=$(WWW)' $(WWW) -q --no-trunc | head -n1)
 
 MAILHOG         := $(STACK)_mailhog
 MAILHOGFULLNAME := $(MAILHOG).1.$$(docker service ps -f 'name=$(MAILHOG)' $(MAILHOG) -q --no-trunc | head -n1)
@@ -198,8 +198,8 @@ else
 endif
 
 inspect: isdocker ## docker service inspect
-ifeq ($(COMMAND_ARGS),redis)
-	@docker service inspect $(REDIS)
+ifeq ($(COMMAND_ARGS),www)
+	@docker service inspect $(WWW)
 else ifeq ($(COMMAND_ARGS),mailhog)
 	@docker service inspect $(MAILHOG)
 else ifeq ($(COMMAND_ARGS),mercure)
@@ -218,7 +218,7 @@ else
 	@echo "make inspect ARGUMENT"
 	@echo "---"
 	@echo "stack: inspect stack"
-	@echo "redis: REDIS"
+	@echo "www: WWW"
 	@echo "mailhot: MAILHOG"
 	@echo "mercure: MERCURE"
 	@echo "mariadb: MARIADB"
@@ -316,8 +316,8 @@ endif
 logs: isdocker ## Scripts logs
 ifeq ($(COMMAND_ARGS),stack)
 	@docker service logs -f --tail 100 --raw $(STACK)
-else ifeq ($(COMMAND_ARGS),redis)
-	@docker service logs -f --tail 100 --raw $(REDISFULLNAME)
+else ifeq ($(COMMAND_ARGS),www)
+	@docker service logs -f --tail 100 --raw $(WWWFULLNAME)
 else ifeq ($(COMMAND_ARGS),mailhog)
 	@docker service logs -f --tail 100 --raw $(MAILHOGFULLNAME)
 else ifeq ($(COMMAND_ARGS),mercure)
@@ -336,7 +336,7 @@ else
 	@echo "make logs ARGUMENT"
 	@echo "---"
 	@echo "stack: logs stack"
-	@echo "redis: REDIS"
+	@echo "www: WWW"
 	@echo "mailhot: MAILHOG"
 	@echo "mercure: MERCURE"
 	@echo "mariadb: MARIADB"
@@ -360,8 +360,8 @@ sleep: ## sleep
 	@sleep  $(COMMAND_ARGS)
 
 ssh: isdocker ## SSH
-ifeq ($(COMMAND_ARGS),redis)
-	@docker exec -it $(REDISFULLNAME) /bin/bash
+ifeq ($(COMMAND_ARGS),www)
+	@docker exec -it $(wWWWFULLNAME) /bin/bash
 else ifeq ($(COMMAND_ARGS),mailhog)
 	@docker exec -it $(MAILHOGFULLNAME) /bin/bash
 else ifeq ($(COMMAND_ARGS),mercure)
@@ -379,7 +379,7 @@ else
 	@echo "---"
 	@echo "make ssh ARGUMENT"
 	@echo "---"
-	@echo "redis: REDIS"
+	@echo "www: WWW"
 	@echo "mailhot: MAILHOG"
 	@echo "mercure: MERCURE"
 	@echo "mariadb: MARIADB"
@@ -389,8 +389,8 @@ else
 endif
 
 update: isdocker ## update
-ifeq ($(COMMAND_ARGS),redis)
-	@docker service update $(REDIS)
+ifeq ($(COMMAND_ARGS),www)
+	@docker service update $(WWW)
 else ifeq ($(COMMAND_ARGS),mailhog)
 	@docker service update $(MAILHOG)
 else ifeq ($(COMMAND_ARGS),mercure)
@@ -408,7 +408,7 @@ else
 	@echo "---"
 	@echo "make update ARGUMENT"
 	@echo "---"
-	@echo "redis: REDIS"
+	@echo "www: WWW"
 	@echo "mailhot: MAILHOG"
 	@echo "mercure: MERCURE"
 	@echo "mariadb: MARIADB"
