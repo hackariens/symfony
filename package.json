@@ -30,7 +30,7 @@
     "@symfony/webpack-encore": "0.33.0",
     "all-contributors-cli": "6.20.0",
     "dotenv": "8.2.0",
-    "gitmoji-changelog": "2.1.0",
+    "gitmoji-changelog": "2.2.0",
     "license-checker": "25.0.1",
     "markdownlint-cli": "0.24.0",
     "node-sass": "4.14.1",
