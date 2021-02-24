@@ -122,6 +122,10 @@ else
 	@npm run contributors
 endif
 
+.PHONY: sleep
+sleep: ## sleep
+	@sleep  $(COMMAND_ARGS)
+
 docker: isdocker ## Scripts docker
 ifeq ($(COMMAND_ARGS),create-network)
 	@docker network create --driver=overlay $(NETWORK)
@@ -355,9 +359,6 @@ else
 	@echo "---"
 	@echo "consume: Messenger Consume"
 endif
-
-sleep: ## sleep
-	@sleep  $(COMMAND_ARGS)
 
 ssh: isdocker ## SSH
 ifeq ($(COMMAND_ARGS),www)
