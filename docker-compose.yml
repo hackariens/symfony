@@ -11,6 +11,17 @@ volumes:
   mariadb_data:
 
 services:
+  phpfpmexec:
+    image: koromerzhin/phpfpm:7.4.12
+    command: sh -c "composer install"
+    volumes:
+      - ${PWD}/apps:/var/www/
+      - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    deploy:
+      restart_policy:
+        condition: none
+      labels:
+        - "traefik.enable=false"
   redis:
     image: redis:6.2.0
     networks:

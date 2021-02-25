@@ -50,12 +50,6 @@ node_modules:
 dump:
 	@mkdir dump
 
-apps/composer.lock: apps/composer.json
-	$(DOCKER_EXECPHP) make composer.lock
-
-apps/vendor: apps/composer.lock
-	$(DOCKER_EXECPHP) make vendor
-
 apps/.env: apps/.env.dist ## Install .env
 	@cp apps/.env.dist apps/.env
 
@@ -235,15 +229,14 @@ install: folders apps/.env ## installation
 ifeq ($(COMMAND_ARGS),all)
 	@make node_modules -i
 	@make docker deploy -i
-	@make apps/vendor -i
 	@make sleep 60 -i
 	@make bdd migrate -i
 	@make assets -i
 	@make encore dev -i
-	@make linter -i
+	@make linter all -i
 else ifeq ($(COMMAND_ARGS),dev)
 	@make install all
-	@make bdd features -i
+	@make bdd fixtures -i
 else
 	@echo "ARGUMENT missing"
 	@echo "---"
