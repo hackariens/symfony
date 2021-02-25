@@ -6,7 +6,6 @@
   "scripts": {
     "linter-markdown": "markdownlint",
     "contributors": "all-contributors",
-    "changelog": "gitmoji-changelog",
     "readme": "readme",
     "licenses": "license-checker",
     "encore-dev-server": "encore dev-server",
@@ -30,7 +29,6 @@
     "@symfony/webpack-encore": "0.33.0",
     "all-contributors-cli": "6.20.0",
     "dotenv": "8.2.0",
-    "gitmoji-changelog": "2.1.0",
     "license-checker": "25.0.1",
     "markdownlint-cli": "0.24.0",
     "node-sass": "4.14.1",
