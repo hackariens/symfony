@@ -32,7 +32,7 @@
     "all-contributors-cli": "6.20.0",
     "dotenv": "8.2.0",
     "generate-changelog": "1.8.0",
-    "jscpd": "3.3.24",
+    "jscpd": "3.3.25",
     "license-checker": "25.0.1",
     "markdownlint-cli": "0.24.0",
     "node-sass": "5.0.0",
