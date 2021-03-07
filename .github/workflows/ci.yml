@@ -1,0 +1,83 @@
+name: Continuous Integration
+on: [push]
+jobs:
+  tests:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      fail-fast: false
+      matrix:
+        operating-system: [ubuntu-20.04]
+        php-versions: ["7.4"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache npm packages
+        id: npm-cache
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node
+      - name: Install npm dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: make node_modules
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            apps/bin
+            apps/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+      - name: 'Create folders'
+        run: make folders
+      - name: 'Docker swarm init'
+        run: docker swarm init --default-addr-pool 10.20.0.0/16
+      - name: 'Create proxy network'
+        run: make docker create-network
+      - name: 'Image pull'
+        run: make docker image-pull
+      - name: 'Build containers'
+        run: make docker deploy
+      - name: 'sleep'
+        run: make sleep 60
+      - name: 'docker ls'
+        run: make docker ls
+      - name: Setup PHP, with composer and extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, xml, ctype, iconv, intl
+          coverage: xdebug
+      - name: Install Composer dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make composer dev
+      - name: linter readme.md
+        run: make linter readme
+      - name: linter PHP Code Sniffer
+        run: make linter phpcs-onlyerror
+      - name: linter PHP MD
+        run: make linter phpmd
+      - name: linter PHPMND
+        run: make linter phpmnd
+      - name: Add assets
+        run: make assets
+      - name: Test lancement bootstrap
+        run: make encore dev
+      - name: Linter twig
+        run: make linter twig
+      - name: Linter yaml
+        run: make linter yaml
+      # - name: linter phpstan
+      #   run: make linter phpstan
+      - name: 'Composer install'
+        run: make composer dev
+      # - name: 'BDD MIGRATE'
+      #   run: make bdd migrate
+      # - name: 'Run the fixtures'
+      #   run: make bdd fixtures
+      - name: Run Acceptance Tests
+        run: make tests behat

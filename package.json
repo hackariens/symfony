@@ -1,0 +1,43 @@
+{
+  "name": "@koromerzhin/template-symfony",
+  "version": "0.0.1",
+  "description": "Template de site internet sous Symfony",
+  "main": "index.js",
+  "scripts": {
+    "linter-markdown": "markdownlint",
+    "contributors": "all-contributors",
+    "readme": "readme",
+    "licenses": "license-checker",
+    "encore-dev-server": "encore dev-server",
+    "encore-dev": "encore dev",
+    "encore-watch": "encore dev --watch",
+    "encore-build": "encore production --progress",
+    "changelog": "changelog",
+    "jscpd": "jscpd apps/src assets"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koromerzhin/template-symfony.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/koromerzhin/template-symfony/issues"
+  },
+  "homepage": "https://github.com/koromerzhin/template-symfony#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@symfony/webpack-encore": "0.33.0",
+    "all-contributors-cli": "6.20.0",
+    "dotenv": "8.2.0",
+    "generate-changelog": "1.8.0",
+    "jscpd": "3.3.25",
+    "license-checker": "25.0.1",
+    "markdownlint-cli": "0.24.0",
+    "node-sass": "5.0.0",
+    "readme-md-generator": "1.0.0",
+    "sass-loader": "11.0.1",
+    "webpack-notifier": "1.13.0"
+  }
+}
