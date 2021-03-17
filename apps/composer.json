@@ -15,7 +15,7 @@
     "doctrine/doctrine-bundle": "2.1.2",
     "doctrine/doctrine-migrations-bundle": "3.0.1",
     "doctrine/orm": "2.7.4",
-    "giggsey/libphonenumber-for-php": "8.12.11",
+    "giggsey/libphonenumber-for-php": "8.12.20",
     "knplabs/knp-menu-bundle": "3.0.0",
     "knplabs/knp-paginator-bundle": "5.3.0",
     "nelmio/cors-bundle": "2.1.0",
