@@ -23,7 +23,7 @@ services:
       labels:
         - "traefik.enable=false"
   redis:
-    image: redis:6.2.0
+    image: redis:6.2.3
     networks:
       - net
     deploy:
