@@ -39,7 +39,7 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.mailhog-symfony.rule=Host(`mailhog-symfony.traefik.me`)"
+        - "traefik.http.routers.mailhog-symfony.rule=HostRegexp(`mailhog-symfony.traefik.me`, `mailhog-symfony.{ip:.*}.traefik.me`)"
         - "traefik.http.routers.mailhog-symfony-tls.tls.domains[0].main=mailhog-symfony.traefik.me"
         - "traefik.http.routers.mailhog-symfony-tls.tls.domains[0].sans=mailhog-symfony-*.traefik.me"
         - "traefik.http.services.mailhog-symfony.loadbalancer.server.port=8025"
@@ -60,7 +60,7 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.mercure-symfony.rule=Host(`mercure-symfony.traefik.me`)"
+        - "traefik.http.routers.mercure-symfony.rule=HostRegexp(`mercure-symfony.traefik.me`, `mercure-symfony.{ip:.*}.traefik.me`)"
         - "traefik.http.routers.mercure-symfony-tls.tls.domains[0].main=mercure-symfony.traefik.me"
         - "traefik.http.routers.mercure-symfony-tls.tls.domains[0].sans=mercure-symfony-*.traefik.me"
         - "traefik.http.services.mercure-symfony.loadbalancer.server.port=80"
@@ -93,7 +93,7 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.symfony.rule=Host(`symfony.traefik.me`)"
+        - "traefik.http.routers.symfony.rule=HostRegexp(`symfony.traefik.me`, `symfony.{ip:.*}.traefik.me`)"
         - "traefik.http.routers.symfony-tls.tls.domains[0].main=symfony.traefik.me"
         - "traefik.http.routers.symfony-tls.tls.domains[0].sans=symfony-*.traefik.me"
         - "traefik.http.services.symfony.loadbalancer.server.port=80"
@@ -110,7 +110,7 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.phpmyadmin-symfony.rule=Host(`phpmyadmin-symfony.traefik.me`)"
+        - "traefik.http.routers.phpmyadmin-symfony.rule=HostRegexp(`phpmyadmin-symfony.traefik.me`, `phpmyadmin-symfony.{ip:.*}.traefik.me`)"
         - "traefik.http.routers.phpmyadmin-symfony-tls.tls.domains[0].main=phpmyadmin-symfony.traefik.me"
         - "traefik.http.routers.phpmyadmin-symfony-tls.tls.domains[0].sans=phpmyadmin-symfony-*.traefik.me"
         - "traefik.http.services.phpmyadmin-symfony.loadbalancer.server.port=80"
