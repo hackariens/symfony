@@ -50,7 +50,7 @@
     "symfony/security-bundle": "5.1.7",
     "symfony/security-core": "5.1.7",
     "symfony/security-csrf": "5.1.7",
-    "symfony/security-guard": "5.1.7",
+    "symfony/security-guard": "5.2.8",
     "symfony/security-http": "5.1.7",
     "symfony/serializer": "5.1.7",
     "symfony/string": "5.1.7",
