@@ -1,51 +1,18 @@
-isDocker := $(shell docker info > /dev/null 2>&1 && echo 1)
-
-.DEFAULT_GOAL := help
+include make/general/Makefile
 STACK         := symfony
 NETWORK       := proxynetwork
+include make/docker/Makefile
 
-WWW         := $(STACK)_www
-WWWFULLNAME := $(WWW).1.$$(docker service ps -f 'name=$(WWW)' $(WWW) -q --no-trunc | head -n1)
+PHPFPMFULLNAME := $(STACK)_phpfpm.1.$$(docker service ps -f 'name=$(STACK)_phpfpm' $(STACK)_phpfpm -q --no-trunc | head -n1)
 
-MAILHOG         := $(STACK)_mailhog
-MAILHOGFULLNAME := $(MAILHOG).1.$$(docker service ps -f 'name=$(MAILHOG)' $(MAILHOG) -q --no-trunc | head -n1)
+DOCKER_EXECPHP := @docker exec $(STACK)_phpfpm.1.$$(docker service ps -f 'name=$(STACK)_phpfpm' $(STACK)_phpfpm -q --no-trunc | head -n1)
 
-MERCURE         := $(STACK)_mercure
-MERCUREFULLNAME := $(MERCURE).1.$$(docker service ps -f 'name=$(MERCURE)' $(MERCURE) -q --no-trunc | head -n1)
-
-MARIADB         := $(STACK)_mariadb
-MARIADBFULLNAME := $(MARIADB).1.$$(docker service ps -f 'name=$(MARIADB)' $(MARIADB) -q --no-trunc | head -n1)
-
-APACHE         := $(STACK)_apache
-APACHEFULLNAME := $(APACHE).1.$$(docker service ps -f 'name=$(APACHE)' $(APACHE) -q --no-trunc | head -n1)
-
-PHPMYADMIN         := $(STACK)_phpmyadmin
-PHPMYADMINFULLNAME := $(PHPMYADMIN).1.$$(docker service ps -f 'name=$(PHPMYADMIN)' $(PHPMYADMIN) -q --no-trunc | head -n1)
-
-PHPFPM         := $(STACK)_phpfpm
-PHPFPMFULLNAME := $(PHPFPM).1.$$(docker service ps -f 'name=$(PHPFPM)' $(PHPFPM) -q --no-trunc | head -n1)
-
-DOCKER_EXECPHP := @docker exec $(PHPFPMFULLNAME)
-
-SUPPORTED_COMMANDS := bdd composer contributors docker encore env geocode git inspect install linter logs messenger sleep ssh tests workflow-png update inspect
+SUPPORTED_COMMANDS := workflow-png tests messenger linter install geocode env encore composer bdd
 SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
 ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   COMMAND_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(COMMAND_ARGS):;@:)
 endif
-
-help:
-	@grep -E '(^[a-zA-Z_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
-
-.PHONY: isdocker
-isdocker: ## Docker is launch
-ifeq ($(isDocker), 0)
-	@echo "Docker is not launch"
-	exit 1
-endif
-
-node_modules:
-	@npm install
 
 dump:
 	@mkdir dump
@@ -56,7 +23,7 @@ apps/.env: apps/.env.dist ## Install .env
 assets: isdocker
 	$(DOCKER_EXECPHP) make assets
 
-bdd: isdocker ## Scripts for BDD
+bdd: isdocker ### Scripts for BDD
 ifeq ($(COMMAND_ARGS),fixtures)
 	$(DOCKER_EXECPHP) make bdd fixtures
 else ifeq ($(COMMAND_ARGS),migrate)
@@ -73,7 +40,7 @@ else
 	@echo "validate: bdd validate"
 endif
 
-composer: isdocker ## Scripts for composer
+composer: isdocker ### Scripts for composer
 ifeq ($(COMMAND_ARGS),suggests)
 	$(DOCKER_EXECPHP) make composer suggests
 else ifeq ($(COMMAND_ARGS),outdated)
@@ -102,45 +69,7 @@ else
 	@echo "validate: COMPOSER validate"
 endif
 
-contributors: node_modules ## Contributors
-ifeq ($(COMMAND_ARGS),add)
-	@npm run contributors add
-else ifeq ($(COMMAND_ARGS),check)
-	@npm run contributors check
-else ifeq ($(COMMAND_ARGS),generate)
-	@npm run contributors generate
-else
-	@npm run contributors
-endif
-
-.PHONY: sleep
-sleep: ## sleep
-	@sleep  $(COMMAND_ARGS)
-
-docker: isdocker ## Scripts docker
-ifeq ($(COMMAND_ARGS),create-network)
-	@docker network create --driver=overlay $(NETWORK)
-else ifeq ($(COMMAND_ARGS),image-pull)
-	@more docker-compose.yml | grep image: | sed -e "s/^.*image:[[:space:]]//" | while read i; do docker pull $$i; done
-else ifeq ($(COMMAND_ARGS),deploy)
-	@docker stack deploy -c docker-compose.yml $(STACK)
-else ifeq ($(COMMAND_ARGS),ls)
-	@docker stack services $(STACK)
-else ifeq ($(COMMAND_ARGS),stop)
-	@docker stack rm $(STACK)
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make docker ARGUMENT"
-	@echo "---"
-	@echo "create-network: create network"
-	@echo "deploy: deploy"
-	@echo "image-pull: Get docker image"
-	@echo "ls: docker service"
-	@echo "stop: docker stop"
-endif
-
-encore: node_modules ## Script for Encore
+encore: node_modules ##" Script for Encore
 ifeq ($(COMMAND_ARGS),dev)
 	@npm rebuild node-sass
 	@npm run encore-dev
@@ -157,7 +86,7 @@ endif
 
 folders: dump ## Create folder
 
-env: apps/.env ## Scripts Installation environnement
+env: apps/.env ### Scripts Installation environnement
 ifeq ($(COMMAND_ARGS),dev)
 	@sed -i 's/APP_ENV=prod/APP_ENV=dev/g' apps/.env
 else ifeq ($(COMMAND_ARGS),prod)
@@ -173,59 +102,10 @@ else
 	@echo "prod: environnement prod"
 endif
 
-geocode: isdocker ## Geocode
+geocode: isdocker ### Geocode
 	$(DOCKER_EXECPHP) make geocode $(COMMAND_ARGS)
 
-git: node_modules ## Scripts GIT
-ifeq ($(COMMAND_ARGS),status)
-	@git status
-else ifeq ($(COMMAND_ARGS),check)
-	@make composer validate -i
-	@make composer outdated -i
-	@make bdd validate -i
-	@make contributors check -i
-	@make linter all -i
-	@make git status -i
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make git ARGUMENT"
-	@echo "---"
-	@echo "check: CHECK before"
-	@echo "status: status"
-endif
-
-inspect: isdocker ## docker service inspect
-ifeq ($(COMMAND_ARGS),www)
-	@docker service inspect $(WWW)
-else ifeq ($(COMMAND_ARGS),mailhog)
-	@docker service inspect $(MAILHOG)
-else ifeq ($(COMMAND_ARGS),mercure)
-	@docker service inspect $(MERCURE)
-else ifeq ($(COMMAND_ARGS),mariadb)
-	@docker service inspect $(MARIADB)
-else ifeq ($(COMMAND_ARGS),apache)
-	@docker service inspect $(APACHE)
-else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	@docker service inspect $(PHPMYADMIN)
-else ifeq ($(COMMAND_ARGS),phpfpm)
-	@docker service inspect $(PHPFPM)
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make inspect ARGUMENT"
-	@echo "---"
-	@echo "stack: inspect stack"
-	@echo "www: WWW"
-	@echo "mailhot: MAILHOG"
-	@echo "mercure: MERCURE"
-	@echo "mariadb: MARIADB"
-	@echo "apache: APACHE"
-	@echo "phpmyadmin: PHPMYADMIN"
-	@echo "phpfpm: PHPFPM"
-endif
-
-install: folders apps/.env ## installation
+install: folders apps/.env ### installation
 ifeq ($(COMMAND_ARGS),all)
 	@make node_modules -i
 	@make docker deploy -i
@@ -246,7 +126,7 @@ else
 	@echo "dev: dev"
 endif
 
-linter: node_modules isdocker## Scripts Linter
+linter: node_modules isdocker### Scripts Linter
 ifeq ($(COMMAND_ARGS),all)
 	@make linter eslint -i
 	@make linter twig -i
@@ -310,39 +190,7 @@ else
 	@echo "yaml: indique les erreurs de code de yaml"
 endif
 
-logs: isdocker ## Scripts logs
-ifeq ($(COMMAND_ARGS),stack)
-	@docker service logs -f --tail 100 --raw $(STACK)
-else ifeq ($(COMMAND_ARGS),www)
-	@docker service logs -f --tail 100 --raw $(WWWFULLNAME)
-else ifeq ($(COMMAND_ARGS),mailhog)
-	@docker service logs -f --tail 100 --raw $(MAILHOGFULLNAME)
-else ifeq ($(COMMAND_ARGS),mercure)
-	@docker service logs -f --tail 100 --raw $(MERCUREFULLNAME)
-else ifeq ($(COMMAND_ARGS),mariadb)
-	@docker service logs -f --tail 100 --raw $(MARIADBFULLNAME)
-else ifeq ($(COMMAND_ARGS),apache)
-	@docker service logs -f --tail 100 --raw $(APACHEFULLNAME)
-else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	@docker service logs -f --tail 100 --raw $(PHPMYADMINFULLNAME)
-else ifeq ($(COMMAND_ARGS),phpfpm)
-	@docker service logs -f --tail 100 --raw $(PHPFPMFULLNAME)
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make logs ARGUMENT"
-	@echo "---"
-	@echo "stack: logs stack"
-	@echo "www: WWW"
-	@echo "mailhot: MAILHOG"
-	@echo "mercure: MERCURE"
-	@echo "mariadb: MARIADB"
-	@echo "apache: APACHE"
-	@echo "phpmyadmin: PHPMYADMIN"
-	@echo "phpfpm: PHPFPM"
-endif
-
-messenger: isdocker ## Scripts messenger
+messenger: isdocker ### Scripts messenger
 ifeq ($(COMMAND_ARGS),consule)
 	$(DOCKER_EXECPHP) make messenger consume
 else
@@ -353,65 +201,7 @@ else
 	@echo "consume: Messenger Consume"
 endif
 
-ssh: isdocker ## SSH
-ifeq ($(COMMAND_ARGS),www)
-	@docker exec -it $(wWWWFULLNAME) /bin/bash
-else ifeq ($(COMMAND_ARGS),mailhog)
-	@docker exec -it $(MAILHOGFULLNAME) /bin/bash
-else ifeq ($(COMMAND_ARGS),mercure)
-	@docker exec -it $(MERCUREFULLNAME) /bin/bash
-else ifeq ($(COMMAND_ARGS),mariadb)
-	@docker exec -it $(MARIADBFULLNAME) /bin/bash
-else ifeq ($(COMMAND_ARGS),apache)
-	@docker exec -it $(APACHEFULLNAME) /bin/bash
-else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	@docker exec -it $(PHPMYADMINFULLNAME) /bin/bash
-else ifeq ($(COMMAND_ARGS),phpfpm)
-	@docker exec -it $(PHPFPMFULLNAME) /bin/bash
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make ssh ARGUMENT"
-	@echo "---"
-	@echo "www: WWW"
-	@echo "mailhot: MAILHOG"
-	@echo "mercure: MERCURE"
-	@echo "mariadb: MARIADB"
-	@echo "apache: APACHE"
-	@echo "phpmyadmin: PHPMYADMIN"
-	@echo "phpfpm: PHPFPM"
-endif
-
-update: isdocker ## update
-ifeq ($(COMMAND_ARGS),www)
-	@docker service update $(WWW)
-else ifeq ($(COMMAND_ARGS),mailhog)
-	@docker service update $(MAILHOG)
-else ifeq ($(COMMAND_ARGS),mercure)
-	@docker service update $(MERCURE)
-else ifeq ($(COMMAND_ARGS),mariadb)
-	@docker service update $(MARIADB)
-else ifeq ($(COMMAND_ARGS),apache)
-	@docker service update $(APACHE)
-else ifeq ($(COMMAND_ARGS),phpmyadmin)
-	@docker service update $(PHPMYADMIN)
-else ifeq ($(COMMAND_ARGS),phpfpm)
-	@docker service update $(PHPFPM)
-else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make update ARGUMENT"
-	@echo "---"
-	@echo "www: WWW"
-	@echo "mailhot: MAILHOG"
-	@echo "mercure: MERCURE"
-	@echo "mariadb: MARIADB"
-	@echo "apache: APACHE"
-	@echo "phpmyadmin: PHPMYADMIN"
-	@echo "phpfpm: PHPFPM"
-endif
-
-tests: isdocker ## Scripts tests
+tests: isdocker ### Scripts tests
 ifeq ($(COMMAND_ARGS),launch)
 	@docker exec $(PHPFPMFULLNAME) make tests all
 else ifeq ($(COMMAND_ARGS),behat)
@@ -434,5 +224,5 @@ endif
 translations: isdocker ## update translation
 	$(DOCKER_EXECPHP) make translations
 
-workflow-png: isdocker ## generate workflow png
+workflow-png: isdocker ### generate workflow png
 	$(DOCKER_EXECPHP) make workflow-png $(COMMAND_ARGS)

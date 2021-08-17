@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Cache npm packages
         id: npm-cache
         uses: actions/cache@v2
@@ -35,7 +37,7 @@ jobs:
       - name: 'Create folders'
         run: make folders
       - name: 'Docker swarm init'
-        run: docker swarm init --default-addr-pool 10.20.0.0/16
+        run: make docker create-network
       - name: 'Create proxy network'
         run: make docker create-network
       - name: 'Image pull'
