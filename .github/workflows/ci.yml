@@ -37,7 +37,7 @@ jobs:
       - name: 'Create folders'
         run: make folders
       - name: 'Docker swarm init'
-        run: make docker create-network
+        run: make docker swarm-init
       - name: 'Create proxy network'
         run: make docker create-network
       - name: 'Image pull'
