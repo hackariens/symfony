@@ -1,7 +1,7 @@
 version: "3.4"
 
 networks:
-  proxynetwork:
+  proxylampy:
     external: true
   net:
     driver: overlay
@@ -33,9 +33,9 @@ services:
     image: mailhog/mailhog:v1.0.1
     networks:
       - net
-      - proxynetwork
+      - proxylampy
     depends_on:
-      - proxynetwork
+      - proxylampy
     deploy:
       labels:
         - "traefik.enable=true"
@@ -53,9 +53,9 @@ services:
       CORS_ALLOWED_ORIGINS: "*"
     networks:
       - net
-      - proxynetwork
+      - proxylampy
     depends_on:
-      - proxynetwork
+      - proxylampy
       - redis
     deploy:
       labels:
@@ -89,7 +89,7 @@ services:
       - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
     networks:
       - net
-      - proxynetwork
+      - proxylampy
     deploy:
       labels:
         - "traefik.enable=true"
@@ -106,7 +106,7 @@ services:
       - mariadb
     networks:
       - net
-      - proxynetwork
+      - proxylampy
     deploy:
       labels:
         - "traefik.enable=true"

@@ -20,7 +20,7 @@ Software:
 - make
 - npm
 - docker
-- repository koromerzhin/traefikproxy
+- repository koromerzhin/lampy
 
 Config:
 
