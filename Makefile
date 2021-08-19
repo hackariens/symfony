@@ -1,6 +1,6 @@
 include make/general/Makefile
 STACK         := symfony
-NETWORK       := proxynetwork
+NETWORK       := proxylampy
 include make/docker/Makefile
 
 PHPFPMFULLNAME := $(STACK)_phpfpm.1.$$(docker service ps -f 'name=$(STACK)_phpfpm' $(STACK)_phpfpm -q --no-trunc | head -n1)
