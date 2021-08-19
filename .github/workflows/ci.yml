@@ -34,8 +34,6 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/apps/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
-      - name: 'Create folders'
-        run: make folders
       - name: 'Docker swarm init'
         run: make docker swarm-init
       - name: 'Create proxy network'

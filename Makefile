@@ -14,9 +14,6 @@ ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   $(eval $(COMMAND_ARGS):;@:)
 endif
 
-dump:
-	@mkdir dump
-
 apps/.env: apps/.env.dist ## Install .env
 	@cp apps/.env.dist apps/.env
 
@@ -84,8 +81,6 @@ else
 	@echo "watch: créer les assets en version watch"
 endif
 
-folders: dump ## Create folder
-
 env: apps/.env ### Scripts Installation environnement
 ifeq ($(COMMAND_ARGS),dev)
 	@sed -i 's/APP_ENV=prod/APP_ENV=dev/g' apps/.env
@@ -105,7 +100,7 @@ endif
 geocode: isdocker ### Geocode
 	$(DOCKER_EXECPHP) make geocode $(COMMAND_ARGS)
 
-install: folders apps/.env ### installation
+install: apps/.env ### installation
 ifeq ($(COMMAND_ARGS),all)
 	@make node_modules -i
 	@make docker deploy -i
