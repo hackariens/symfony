@@ -14,6 +14,14 @@ ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   $(eval $(COMMAND_ARGS):;@:)
 endif
 
+GREEN := \033[0;32m
+RED := \033[0;31m
+YELLOW := \033[0;33m
+NC := \033[0m
+NEED := ${GREEN}%-20s${NC}: %s\n
+MISSING :=${RED}ARGUMENT missing${NC}\n
+ARGUMENTS := make ${PURPLE}%s${NC} ${YELLOW}ARGUMENT${NC}\n
+
 apps/.env: apps/.env.dist ## Install .env
 	@cp apps/.env.dist apps/.env
 
@@ -28,13 +36,13 @@ else ifeq ($(COMMAND_ARGS),migrate)
 else ifeq ($(COMMAND_ARGS),validate)
 	$(DOCKER_EXECPHP) make bdd validate
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make bdd ARGUMENT"
+	@printf "${ARGUMENTS}" bdd
 	@echo "---"
-	@echo "fixtures: fixtures"
-	@echo "migrate: migrate database"
-	@echo "validate: bdd validate"
+	@printf "${NEED}" "fixtures" "fixtures"
+	@printf "${NEED}" "migrate" "migrate database"
+	@printf "${NEED}" "validate" "bdd validate"
 endif
 
 composer: isdocker ### Scripts for composer
@@ -53,17 +61,17 @@ else ifeq ($(COMMAND_ARGS),update)
 else ifeq ($(COMMAND_ARGS),validate)
 	$(DOCKER_EXECPHP) make composer validate
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make composer ARGUMENT"
+	@printf "${ARGUMENTS}" composer
 	@echo "---"
-	@echo "suggests: suggestions package pour PHP"
-	@echo "outdated: Packet php outdated"
-	@echo "fund: Discover how to help fund the maintenance of your dependencies."
-	@echo "prod: Installation version de prod"
-	@echo "dev: Installation version de dev"
-	@echo "update: COMPOSER update"
-	@echo "validate: COMPOSER validate"
+	@printf "${NEED}" "suggests" "suggestions package pour PHP"
+	@printf "${NEED}" "outdated" "Packet php outdated"
+	@printf "${NEED}" "fund" "Discover how to help fund the maintenance of your dependencies."
+	@printf "${NEED}" "prod" "Installation version de prod"
+	@printf "${NEED}" "dev" "Installation version de dev"
+	@printf "${NEED}" "update" "COMPOSER update"
+	@printf "${NEED}" "validate" "COMPOSER validate"
 endif
 
 encore: node_modules ##" Script for Encore
@@ -73,12 +81,12 @@ ifeq ($(COMMAND_ARGS),dev)
 else ifeq ($(COMMAND_ARGS),watch)
 	@npm run encore-watch
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make encore ARGUMENT"
+	@printf "${ARGUMENTS}" encore
 	@echo "---"
-	@echo "dev: créer les assets en version dev"
-	@echo "watch: créer les assets en version watch"
+	@printf "${NEED}" "dev" "créer les assets en version dev"
+	@printf "${NEED}" "watch" "créer les assets en version watch"
 endif
 
 env: apps/.env ### Scripts Installation environnement
@@ -89,12 +97,12 @@ else ifeq ($(COMMAND_ARGS),prod)
 	@rm -rf apps/vendor
 	@make composer prod -i
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make env ARGUMENT"
+	@printf "${ARGUMENTS}" env
 	@echo "---"
-	@echo "dev: environnement dev"
-	@echo "prod: environnement prod"
+	@printf "${NEED}" "dev" "environnement dev"
+	@printf "${NEED}" "prod" "environnement prod"
 endif
 
 geocode: isdocker ### Geocode
@@ -113,12 +121,12 @@ else ifeq ($(COMMAND_ARGS),dev)
 	@make install all
 	@make bdd fixtures -i
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make install ARGUMENT"
+	@printf "${ARGUMENTS}" install
 	@echo "---"
-	@echo "all: common"
-	@echo "dev: dev"
+	@printf "${NEED}" "all" "common"
+	@printf "${NEED}" "dev" "dev"
 endif
 
 linter: node_modules isdocker### Scripts Linter
@@ -163,26 +171,26 @@ else ifeq ($(COMMAND_ARGS),container)
 else ifeq ($(COMMAND_ARGS),yaml)
 	$(DOCKER_EXECPHP) make linter yaml
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make linter ARGUMENT"
+	@printf "${ARGUMENTS}" linter
 	@echo "---"
-	@echo "all: ## Launch all linter"
-	@echo "readme: linter README.md"
-	@echo "eslint: indique les erreurs sur le code JavaScript à partir d'un standard"
-	@echo "eslint-fix: fixe le code JavaScript à partir d'un standard"
-	@echo "phpcbf: fixe le code PHP à partir d'un standard"
-	@echo "phpcpd: Vérifie s'il y a du code dupliqué"
-	@echo "phpcs: indique les erreurs de code non corrigé par PHPCBF"
-	@echo "phpcs-onlywarning: indique les erreurs de code non corrigé par PHPCBF"
-	@echo "phpcs-onlyerror: indique les erreurs de code non corrigé par PHPCBF"
-	@echo "phploc: phploc"
-	@echo "phpmd: indique quand le code PHP contient des erreurs de syntaxes ou des erreurs"
-	@echo "phpmnd: Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes"
-	@echo "phpstan: regarde si le code PHP ne peux pas être optimisé"
-	@echo "twig: indique les erreurs de code de twig"
-	@echo "container: indique les erreurs de code de container"
-	@echo "yaml: indique les erreurs de code de yaml"
+	@printf "${NEED}" "all" "## Launch all linter"
+	@printf "${NEED}" "readme" "linter README.md"
+	@printf "${NEED}" "eslint" "indique les erreurs sur le code JavaScript à partir d'un standard"
+	@printf "${NEED}" "eslint-fix" "fixe le code JavaScript à partir d'un standard"
+	@printf "${NEED}" "phpcbf" "fixe le code PHP à partir d'un standard"
+	@printf "${NEED}" "phpcpd" "Vérifie s'il y a du code dupliqué"
+	@printf "${NEED}" "phpcs" "indique les erreurs de code non corrigé par PHPCBF"
+	@printf "${NEED}" "phpcs-onlywarning" "indique les erreurs de code non corrigé par PHPCBF"
+	@printf "${NEED}" "phpcs-onlyerror" "indique les erreurs de code non corrigé par PHPCBF"
+	@printf "${NEED}" "phploc" "phploc"
+	@printf "${NEED}" "phpmd" "indique quand le code PHP contient des erreurs de syntaxes ou des erreurs"
+	@printf "${NEED}" "phpmnd" "Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes"
+	@printf "${NEED}" "phpstan" "regarde si le code PHP ne peux pas être optimisé"
+	@printf "${NEED}" "twig" "indique les erreurs de code de twig"
+	@printf "${NEED}" "container" "indique les erreurs de code de container"
+	@printf "${NEED}" "yaml" "indique les erreurs de code de yaml"
 endif
 
 messenger: isdocker ### Scripts messenger
@@ -206,14 +214,14 @@ else ifeq ($(COMMAND_ARGS),simple-phpunit-unit-integration)
 else ifeq ($(COMMAND_ARGS),simple-phpunit)
 	@docker exec $(PHPFPMFULLNAME) make tests simple-phpunit
 else
-	@echo "ARGUMENT missing"
+	@printf "${MISSING}"
 	@echo "---"
-	@echo "make tests ARGUMENT"
+	@printf "${ARGUMENTS}" tests
 	@echo "---"
-	@echo "launch: Launch all tests"
-	@echo "behat: Lance les tests behat"
-	@echo "simple-phpunit-unit-integration: lance les tests phpunit"
-	@echo "simple-phpunit: lance les tests phpunit"
+	@printf "${NEED}" "launch" "Launch all tests"
+	@printf "${NEED}" "behat" "Lance les tests behat"
+	@printf "${NEED}" "simple-phpunit-unit-integration" "lance les tests phpunit"
+	@printf "${NEED}" "simple-phpunit" "lance les tests phpunit"
 endif
 
 translations: isdocker ## update translation
