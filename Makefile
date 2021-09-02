@@ -14,13 +14,9 @@ ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   $(eval $(COMMAND_ARGS):;@:)
 endif
 
-GREEN := \033[0;32m
-RED := \033[0;31m
-YELLOW := \033[0;33m
-NC := \033[0m
-NEED := ${GREEN}%-20s${NC}: %s\n
-MISSING :=${RED}ARGUMENT missing${NC}\n
-ARGUMENTS := make ${PURPLE}%s${NC} ${YELLOW}ARGUMENT${NC}\n
+SYMFONY_EXEC := ${DOCKER_EXECPHP} symfony console
+COMPOSER_EXEC := ${DOCKER_EXECPHP} symfony composer
+PHP_EXEC := ${DOCKER_EXECPHP} php
 
 apps/.env: apps/.env.dist ## Install .env
 	@cp apps/.env.dist apps/.env
@@ -28,49 +24,48 @@ apps/.env: apps/.env.dist ## Install .env
 assets: isdocker
 	$(DOCKER_EXECPHP) make assets
 
+.PHONY: bdd
 bdd: isdocker ### Scripts for BDD
-ifeq ($(COMMAND_ARGS),fixtures)
-	$(DOCKER_EXECPHP) make bdd fixtures
-else ifeq ($(COMMAND_ARGS),migrate)
-	$(DOCKER_EXECPHP) make bdd migrate
-else ifeq ($(COMMAND_ARGS),validate)
-	$(DOCKER_EXECPHP) make bdd validate
+ifeq ($(COMMANDS_ARGS),fixtures)
+	${SYMFONY_EXEC} doctrine:fixtures:load -n
+else ifeq ($(COMMANDS_ARGS),migrate)
+	${SYMFONY_EXEC} doctrine:migrations:migrate -n
+else ifeq ($(COMMANDS_ARGS),validate)
+	${SYMFONY_EXEC} doctrine:schema:validate
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" bdd
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" "bdd"
 	@printf "${NEED}" "fixtures" "fixtures"
 	@printf "${NEED}" "migrate" "migrate database"
 	@printf "${NEED}" "validate" "bdd validate"
 endif
 
+.PHONY: composer
 composer: isdocker ### Scripts for composer
-ifeq ($(COMMAND_ARGS),suggests)
-	$(DOCKER_EXECPHP) make composer suggests
-else ifeq ($(COMMAND_ARGS),outdated)
-	$(DOCKER_EXECPHP) make composer outdated
-else ifeq ($(COMMAND_ARGS),fund)
-	$(DOCKER_EXECPHP) make composer fund
-else ifeq ($(COMMAND_ARGS),prod)
-	$(DOCKER_EXECPHP) make composer prod
-else ifeq ($(COMMAND_ARGS),dev)
-	$(DOCKER_EXECPHP) make composer dev
-else ifeq ($(COMMAND_ARGS),update)
-	$(DOCKER_EXECPHP) make composer update
-else ifeq ($(COMMAND_ARGS),validate)
-	$(DOCKER_EXECPHP) make composer validate
+ifeq ($(COMMANDS_ARGS),suggests)
+	${COMPOSER_EXEC} suggests --by-suggestion
+else ifeq ($(COMMANDS_ARGS),outdated)
+	${COMPOSER_EXEC} outdated
+else ifeq ($(COMMANDS_ARGS),fund)
+	${COMPOSER_EXEC} fund
+else ifeq ($(COMMANDS_ARGS),prod)
+	${COMPOSER_EXEC} install --no-dev --no-progress --prefer-dist --optimize-autoloader
+else ifeq ($(COMMANDS_ARGS),dev)
+	${COMPOSER_EXEC} install --no-progress --prefer-dist --optimize-autoloader
+else ifeq ($(COMMANDS_ARGS),u)
+	${COMPOSER_EXEC} update
+else ifeq ($(COMMANDS_ARGS),i)
+	${COMPOSER_EXEC} install
+else ifeq ($(COMMANDS_ARGS),validate)
+	${COMPOSER_EXEC} validate
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" composer
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" "composer"
 	@printf "${NEED}" "suggests" "suggestions package pour PHP"
+	@printf "${NEED}" "i" "install"
 	@printf "${NEED}" "outdated" "Packet php outdated"
 	@printf "${NEED}" "fund" "Discover how to help fund the maintenance of your dependencies."
 	@printf "${NEED}" "prod" "Installation version de prod"
 	@printf "${NEED}" "dev" "Installation version de dev"
-	@printf "${NEED}" "update" "COMPOSER update"
+	@printf "${NEED}" "u" "COMPOSER update"
 	@printf "${NEED}" "validate" "COMPOSER validate"
 endif
 
@@ -81,10 +76,7 @@ ifeq ($(COMMAND_ARGS),dev)
 else ifeq ($(COMMAND_ARGS),watch)
 	@npm run encore-watch
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" encore
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" encore
 	@printf "${NEED}" "dev" "créer les assets en version dev"
 	@printf "${NEED}" "watch" "créer les assets en version watch"
 endif
@@ -97,16 +89,10 @@ else ifeq ($(COMMAND_ARGS),prod)
 	@rm -rf apps/vendor
 	@make composer prod -i
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" env
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" env
 	@printf "${NEED}" "dev" "environnement dev"
 	@printf "${NEED}" "prod" "environnement prod"
 endif
-
-geocode: isdocker ### Geocode
-	$(DOCKER_EXECPHP) make geocode $(COMMAND_ARGS)
 
 install: apps/.env ### installation
 ifeq ($(COMMAND_ARGS),all)
@@ -121,66 +107,80 @@ else ifeq ($(COMMAND_ARGS),dev)
 	@make install all
 	@make bdd fixtures -i
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" install
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" install
 	@printf "${NEED}" "all" "common"
 	@printf "${NEED}" "dev" "dev"
 endif
 
-linter: node_modules isdocker### Scripts Linter
+linter: node_modules isdocker apps/phploc.phar apps/phpmd.phar ### Scripts Linter
 ifeq ($(COMMAND_ARGS),all)
 	@make linter eslint -i
 	@make linter twig -i
 	@make linter container -i
 	@make linter yaml -i
 	@make linter phpstan -i
-	@make linter phpcpd -i
 	@make linter phpcs -i
 	@make linter phpmd -i
 	@make linter readme -i
+else ifeq ($(COMMANDS_ARGS),phpaudit)
+	@make linter phpcs -i
+	@make linter phpmd -i
+	@make linter phpmnd -i
+	@make linter phpstan -i
 else ifeq ($(COMMAND_ARGS),readme)
 	@npm run linter-markdown README.md
-else ifeq ($(COMMAND_ARGS),eslint)
+else ifeq ($(COMMANDS_ARGS),stylelint)
+	@npm run stylelint
+else ifeq ($(COMMANDS_ARGS),stylelint-fix)
+	@npm run stylelint-fix
+else ifeq ($(COMMANDS_ARGS),jscpd)
+	@npm run jscpd
+else ifeq ($(COMMANDS_ARGS),jscpd-report)
+	@npm run jscpd-report
+else ifeq ($(COMMANDS_ARGS),eslint)
 	@npm run eslint
+else ifeq ($(COMMANDS_ARGS),eslint-fix)
+	@npm run eslint-fix
+else ifeq ($(COMMANDS_ARGS),composer)
+	@make composer validate -i
+	@make composer outdated -i
 else ifeq ($(COMMAND_ARGS),eslint-fix)
 	@npm run eslint-fix
 else ifeq ($(COMMAND_ARGS),phpcbf)
-	$(DOCKER_EXECPHP) make linter phpcbf
-else ifeq ($(COMMAND_ARGS),phpcpd)
-	$(DOCKER_EXECPHP) make linter phpcpd
-else ifeq ($(COMMAND_ARGS),phpcs)
-	$(DOCKER_EXECPHP) make linter phpcs
-else ifeq ($(COMMAND_ARGS),phpcs-onlywarning)
-	$(DOCKER_EXECPHP) make linter phpcs-onlywarning
-else ifeq ($(COMMAND_ARGS),phpcs-onlyerror)
-	$(DOCKER_EXECPHP) make linter phpcs-onlyerror
+	${COMPOSER_EXEC} run phpcbf
+else ifeq ($(COMMANDS_ARGS),phpcs)
+	${COMPOSER_EXEC} run phpcs
+else ifeq ($(COMMANDS_ARGS),phpcs-onlywarning)
+	${COMPOSER_EXEC} run phpcs-onlywarning
+else ifeq ($(COMMANDS_ARGS),phpcs-onlyerror)
+	${COMPOSER_EXEC} run phpcs-onlyerror
 else ifeq ($(COMMAND_ARGS),phploc)
-	$(DOCKER_EXECPHP) make linter phploc
+	$(PHP_EXEC) phploc.phar src
 else ifeq ($(COMMAND_ARGS),phpmd)
-	$(DOCKER_EXECPHP) make linter phpmd
+	$(PHP_EXEC) -d error_reporting=24575 phpmd.phar src,features/bootstrap,tests ansi phpmd.xml
 else ifeq ($(COMMAND_ARGS),phpmnd)
-	$(DOCKER_EXECPHP) make linter phpmnd
+	${COMPOSER_EXEC} run phpmnd
 else ifeq ($(COMMAND_ARGS),phpstan)
-	$(DOCKER_EXECPHP) make linter phpstan
+	${PHP_EXEC} -d memory_limit=-1 -n ./bin/phpstan analyse src
 else ifeq ($(COMMAND_ARGS),twig)
-	$(DOCKER_EXECPHP) make linter twig
+	${SYMFONY_EXEC} lint:twig templates
 else ifeq ($(COMMAND_ARGS),container)
-	$(DOCKER_EXECPHP) make linter container
+	${SYMFONY_EXEC} lint:container
 else ifeq ($(COMMAND_ARGS),yaml)
-	$(DOCKER_EXECPHP) make linter yaml
+	${SYMFONY_EXEC} lint:yaml config
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" linter
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" linter
 	@printf "${NEED}" "all" "## Launch all linter"
+	@printf "${NEED}" "composer" "composer"
+	@printf "${NEED}" "phpaudit" "AUDIT PHP"
 	@printf "${NEED}" "readme" "linter README.md"
+	@printf "${NEED}" "jscpd" "Copy paste detector"
+	@printf "${NEED}" "jscpd-report" "Copy paste detector report"
+	@printf "${NEED}" "stylelint" "indique les erreurs dans le code SCSS"
+	@printf "${NEED}" "stylelint-fix" "fix les erreurs dans le code SCSS"
 	@printf "${NEED}" "eslint" "indique les erreurs sur le code JavaScript à partir d'un standard"
 	@printf "${NEED}" "eslint-fix" "fixe le code JavaScript à partir d'un standard"
 	@printf "${NEED}" "phpcbf" "fixe le code PHP à partir d'un standard"
-	@printf "${NEED}" "phpcpd" "Vérifie s'il y a du code dupliqué"
 	@printf "${NEED}" "phpcs" "indique les erreurs de code non corrigé par PHPCBF"
 	@printf "${NEED}" "phpcs-onlywarning" "indique les erreurs de code non corrigé par PHPCBF"
 	@printf "${NEED}" "phpcs-onlyerror" "indique les erreurs de code non corrigé par PHPCBF"
@@ -193,31 +193,28 @@ else
 	@printf "${NEED}" "yaml" "indique les erreurs de code de yaml"
 endif
 
+.PHONY: messenger
 messenger: isdocker ### Scripts messenger
-ifeq ($(COMMAND_ARGS),consule)
-	$(DOCKER_EXECPHP) make messenger consume
+ifeq ($(COMMANDS_ARGS),consume)
+	${SYMFONY_EXEC} messenger:consume async -vv
 else
-	@echo "ARGUMENT missing"
-	@echo "---"
-	@echo "make messenger ARGUMENT"
-	@echo "---"
-	@echo "consume: Messenger Consume"
+	@printf "${MISSING_ARGUMENTS}" "messenger"
+	@printf "${NEED}" "consume" "Messenger Consume"
 endif
 
+.PHONY: tests
 tests: isdocker ### Scripts tests
-ifeq ($(COMMAND_ARGS),launch)
-	@docker exec $(PHPFPMFULLNAME) make tests all
-else ifeq ($(COMMAND_ARGS),behat)
-	@docker exec $(PHPFPMFULLNAME) make tests behat
-else ifeq ($(COMMAND_ARGS),simple-phpunit-unit-integration)
-	@docker exec $(PHPFPMFULLNAME) make tests simple-phpunit-unit-integration
-else ifeq ($(COMMAND_ARGS),simple-phpunit)
-	@docker exec $(PHPFPMFULLNAME) make tests simple-phpunit
+ifeq ($(COMMANDS_ARGS),launch)
+	@make tests behat -i
+	@make tests simple-phpunit -i
+else ifeq ($(COMMANDS_ARGS),behat)
+	${COMPOSER_EXEC} run behat
+else ifeq ($(COMMANDS_ARGS),simple-phpunit-unit-integration)
+	${COMPOSER_EXEC} run simple-phpunit-unit-integration
+else ifeq ($(COMMANDS_ARGS),simple-phpunit)
+	${COMPOSER_EXEC} run simple-phpunit
 else
-	@printf "${MISSING}"
-	@echo "---"
-	@printf "${ARGUMENTS}" tests
-	@echo "---"
+	@printf "${MISSING_ARGUMENTS}" "tests"
 	@printf "${NEED}" "launch" "Launch all tests"
 	@printf "${NEED}" "behat" "Lance les tests behat"
 	@printf "${NEED}" "simple-phpunit-unit-integration" "lance les tests phpunit"
@@ -225,7 +222,7 @@ else
 endif
 
 translations: isdocker ## update translation
-	$(DOCKER_EXECPHP) make translations
+	${SYMFONY_EXEC} translation:update --force --format=yml fr
 
 workflow-png: isdocker ### generate workflow png
-	$(DOCKER_EXECPHP) make workflow-png $(COMMAND_ARGS)
+	${SYMFONY_EXEC} workflow:dump $(COMMAND_ARGS) | dot -Tpng -o $(COMMAND_ARGS).png
