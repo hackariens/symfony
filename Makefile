@@ -28,7 +28,7 @@ apps/phpmd.phar:
 	$(DOCKER_EXECPHP) wget https://github.com/phpmd/phpmd/releases/download/2.10.2/phpmd.phar
 
 assets: isdocker
-	$(DOCKER_EXECPHP) make assets
+	${SYMFONY_EXEC} assets:install public --symlink --relative
 
 .PHONY: bdd
 bdd: isdocker ### Scripts for BDD
