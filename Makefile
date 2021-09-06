@@ -21,6 +21,12 @@ PHP_EXEC := ${DOCKER_EXECPHP} php
 apps/.env: apps/.env.dist ## Install .env
 	@cp apps/.env.dist apps/.env
 
+apps/phploc.phar:
+	$(DOCKER_EXECPHP) wget https://phar.phpunit.de/phploc-7.0.2.phar -O phploc.phar
+
+apps/phpmd.phar:
+	$(DOCKER_EXECPHP) wget https://github.com/phpmd/phpmd/releases/download/2.10.2/phpmd.phar
+
 assets: isdocker
 	$(DOCKER_EXECPHP) make assets
 
