@@ -34,7 +34,7 @@
     "generate-changelog": "1.8.0",
     "jscpd": "3.3.25",
     "license-checker": "25.0.1",
-    "markdownlint-cli": "0.24.0",
+    "markdownlint-cli": "0.29.0",
     "node-sass": "5.0.0",
     "readme-md-generator": "1.0.0",
     "sass-loader": "11.0.1",
