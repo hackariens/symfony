@@ -7,7 +7,7 @@
     "php": ">=7.2.5",
     "ext-ctype": "*",
     "ext-iconv": "*",
-    "api-platform/core": "2.5.9",
+    "api-platform/core": "2.6.6",
     "beberlei/assert": "3.2.7",
     "beberlei/doctrineextensions": "1.2.8",
     "composer/package-versions-deprecated": "1.11.99",
