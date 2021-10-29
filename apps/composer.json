@@ -63,7 +63,7 @@
     "symfony/yaml": "5.1.7",
     "twig/extra-bundle": "^2.12|^3.0",
     "twig/twig": "^2.12|^3.0",
-    "webonyx/graphql-php": "14.5.1"
+    "webonyx/graphql-php": "14.11.0"
   },
   "require-dev": {
     "behat/behat": "3.7.0",
