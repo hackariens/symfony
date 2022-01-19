@@ -5,7 +5,7 @@ include make/docker/Makefile
 
 PHPFPMFULLNAME := $(STACK)_phpfpm.1.$$(docker service ps -f 'name=$(STACK)_phpfpm' $(STACK)_phpfpm -q --no-trunc | head -n1)
 
-DOCKER_EXECPHP := @docker exec $(PHPFPMFULLNAME)
+DOCKER_EXECPHP := @$(DOCKER_EXEC) $(PHPFPMFULLNAME)
 
 SUPPORTED_COMMANDS := workflow-png tests messenger linter install geocode env encore composer bdd
 SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
