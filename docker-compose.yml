@@ -22,64 +22,6 @@ services:
         condition: none
       labels:
         - "traefik.enable=false"
-  redis:
-    image: redis:6.2.0
-    networks:
-      - net
-    deploy:
-      labels:
-        - "traefik.enable=false"
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    networks:
-      - net
-      - proxylampy
-    depends_on:
-      - proxylampy
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.mailhog-symfony.rule=HostRegexp(`mailhog-symfony.traefik.me`, `mailhog-symfony.{ip:.*}.traefik.me`)"
-        - "traefik.http.routers.mailhog-symfony-tls.tls.domains[0].main=mailhog-symfony.traefik.me"
-        - "traefik.http.routers.mailhog-symfony-tls.tls.domains[0].sans=mailhog-symfony-*.traefik.me"
-        - "traefik.http.services.mailhog-symfony.loadbalancer.server.port=8025"
-  mercure:
-    image: dunglas/mercure
-    environment:
-      MERCURE_PUBLISHER_JWT_KEY: "MyJwtSecret"
-      MERCURE_SUBSCRIBER_JWT_KEY: "MyJwtSecret"
-      ALLOW_ANONYMOUS: 1
-      PUBLISH_ALLOWED_ORIGINS: "*"
-      CORS_ALLOWED_ORIGINS: "*"
-    networks:
-      - net
-      - proxylampy
-    depends_on:
-      - proxylampy
-      - redis
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.mercure-symfony.rule=HostRegexp(`mercure-symfony.traefik.me`, `mercure-symfony.{ip:.*}.traefik.me`)"
-        - "traefik.http.routers.mercure-symfony-tls.tls.domains[0].main=mercure-symfony.traefik.me"
-        - "traefik.http.routers.mercure-symfony-tls.tls.domains[0].sans=mercure-symfony-*.traefik.me"
-        - "traefik.http.services.mercure-symfony.loadbalancer.server.port=80"
-  mariadb:
-    image: mariadb:10.5.9
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: core
-      MYSQL_USER: siteinternet
-      MYSQL_PASSWORD: password
-      TZ: Europe/Paris
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - ${PWD}/dump:/dump
-    networks:
-      - net
-    deploy:
-      labels:
-        - "traefik.enable=false"
   apache:
     image: httpd:2.4.46
     depends_on:
@@ -97,23 +39,6 @@ services:
         - "traefik.http.routers.symfony-tls.tls.domains[0].main=symfony.traefik.me"
         - "traefik.http.routers.symfony-tls.tls.domains[0].sans=symfony-*.traefik.me"
         - "traefik.http.services.symfony.loadbalancer.server.port=80"
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5.1.0
-    environment:
-      PMA_HOST: mariadb
-      MYSQL_ROOT_PASSWORD: example
-    depends_on:
-      - mariadb
-    networks:
-      - net
-      - proxylampy
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.phpmyadmin-symfony.rule=HostRegexp(`phpmyadmin-symfony.traefik.me`, `phpmyadmin-symfony.{ip:.*}.traefik.me`)"
-        - "traefik.http.routers.phpmyadmin-symfony-tls.tls.domains[0].main=phpmyadmin-symfony.traefik.me"
-        - "traefik.http.routers.phpmyadmin-symfony-tls.tls.domains[0].sans=phpmyadmin-symfony-*.traefik.me"
-        - "traefik.http.services.phpmyadmin-symfony.loadbalancer.server.port=80"
   phpfpm:
     image: koromerzhin/phpfpm:7.4.12-symfony
     depends_on:
