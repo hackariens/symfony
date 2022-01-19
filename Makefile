@@ -40,9 +40,11 @@ else ifeq ($(COMMANDS_ARGS),validate)
 	${SYMFONY_EXEC} doctrine:schema:validate
 else
 	@printf "${MISSING_ARGUMENTS}" "bdd"
-	@printf "${NEED}" "fixtures" "fixtures"
-	@printf "${NEED}" "migrate" "migrate database"
-	@printf "${NEED}" "validate" "bdd validate"
+	$(call array_arguments, \
+		["fixtures"]="fixtures" \
+		["migrate"]="migrate database" \
+		["validate"]="bdd validate" \
+	)
 endif
 
 .PHONY: composer
@@ -65,14 +67,16 @@ else ifeq ($(COMMANDS_ARGS),validate)
 	${COMPOSER_EXEC} validate
 else
 	@printf "${MISSING_ARGUMENTS}" "composer"
-	@printf "${NEED}" "suggests" "suggestions package pour PHP"
-	@printf "${NEED}" "i" "install"
-	@printf "${NEED}" "outdated" "Packet php outdated"
-	@printf "${NEED}" "fund" "Discover how to help fund the maintenance of your dependencies."
-	@printf "${NEED}" "prod" "Installation version de prod"
-	@printf "${NEED}" "dev" "Installation version de dev"
-	@printf "${NEED}" "u" "COMPOSER update"
-	@printf "${NEED}" "validate" "COMPOSER validate"
+	$(call array_arguments, \
+		["suggests"]="suggestions package pour PHP" \
+		["i"]="install" \
+		["outdated"]="Packet php outdated" \
+		["fund"]="Discover how to help fund the maintenance of your dependencies." \
+		["prod"]="Installation version de prod" \
+		["dev"]="Installation version de dev" \
+		["u"]="COMPOSER update" \
+		["validate"]="COMPOSER validate" \
+	)
 endif
 
 encore: node_modules ##" Script for Encore
@@ -82,9 +86,11 @@ ifeq ($(COMMAND_ARGS),dev)
 else ifeq ($(COMMAND_ARGS),watch)
 	@npm run encore-watch
 else
-	@printf "${MISSING_ARGUMENTS}" encore
-	@printf "${NEED}" "dev" "créer les assets en version dev"
-	@printf "${NEED}" "watch" "créer les assets en version watch"
+	@printf "${MISSING_ARGUMENTS}" "encore"
+	$(call array_arguments, \
+		["dev"]="créer les assets en version dev" \
+		["watch"]="créer les assets en version watch" \
+	)
 endif
 
 env: apps/.env ### Scripts Installation environnement
@@ -95,9 +101,11 @@ else ifeq ($(COMMAND_ARGS),prod)
 	@rm -rf apps/vendor
 	@make composer prod -i
 else
-	@printf "${MISSING_ARGUMENTS}" env
-	@printf "${NEED}" "dev" "environnement dev"
-	@printf "${NEED}" "prod" "environnement prod"
+	@printf "${MISSING_ARGUMENTS}" "env"
+	$(call array_arguments, \
+		["dev"]="environnement dev" \
+		["prod"]="environnement prod" \
+	)
 endif
 
 install: apps/.env ### installation
@@ -113,9 +121,11 @@ else ifeq ($(COMMAND_ARGS),dev)
 	@make install all
 	@make bdd fixtures -i
 else
-	@printf "${MISSING_ARGUMENTS}" install
-	@printf "${NEED}" "all" "common"
-	@printf "${NEED}" "dev" "dev"
+	@printf "${MISSING_ARGUMENTS}" "install"
+	$(call array_arguments, \
+		["all"]="common" \
+		["dev"]="dev" \
+	)
 endif
 
 linter: node_modules isdocker apps/phploc.phar apps/phpmd.phar ### Scripts Linter
@@ -175,28 +185,30 @@ else ifeq ($(COMMAND_ARGS),container)
 else ifeq ($(COMMAND_ARGS),yaml)
 	${SYMFONY_EXEC} lint:yaml config
 else
-	@printf "${MISSING_ARGUMENTS}" linter
-	@printf "${NEED}" "all" "## Launch all linter"
-	@printf "${NEED}" "composer" "composer"
-	@printf "${NEED}" "phpaudit" "AUDIT PHP"
-	@printf "${NEED}" "readme" "linter README.md"
-	@printf "${NEED}" "jscpd" "Copy paste detector"
-	@printf "${NEED}" "jscpd-report" "Copy paste detector report"
-	@printf "${NEED}" "stylelint" "indique les erreurs dans le code SCSS"
-	@printf "${NEED}" "stylelint-fix" "fix les erreurs dans le code SCSS"
-	@printf "${NEED}" "eslint" "indique les erreurs sur le code JavaScript à partir d'un standard"
-	@printf "${NEED}" "eslint-fix" "fixe le code JavaScript à partir d'un standard"
-	@printf "${NEED}" "phpcbf" "fixe le code PHP à partir d'un standard"
-	@printf "${NEED}" "phpcs" "indique les erreurs de code non corrigé par PHPCBF"
-	@printf "${NEED}" "phpcs-onlywarning" "indique les erreurs de code non corrigé par PHPCBF"
-	@printf "${NEED}" "phpcs-onlyerror" "indique les erreurs de code non corrigé par PHPCBF"
-	@printf "${NEED}" "phploc" "phploc"
-	@printf "${NEED}" "phpmd" "indique quand le code PHP contient des erreurs de syntaxes ou des erreurs"
-	@printf "${NEED}" "phpmnd" "Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes"
-	@printf "${NEED}" "phpstan" "regarde si le code PHP ne peux pas être optimisé"
-	@printf "${NEED}" "twig" "indique les erreurs de code de twig"
-	@printf "${NEED}" "container" "indique les erreurs de code de container"
-	@printf "${NEED}" "yaml" "indique les erreurs de code de yaml"
+	@printf "${MISSING_ARGUMENTS}" "linter"
+	$(call array_arguments, \
+		["all"]="## Launch all linter" \
+		["composer"]="composer" \
+		["phpaudit"]="AUDIT PHP" \
+		["readme"]="linter README.md" \
+		["jscpd"]="Copy paste detector" \
+		["jscpd-report"]="Copy paste detector report" \
+		["stylelint"]="indique les erreurs dans le code SCSS" \
+		["stylelint-fix"]="fix les erreurs dans le code SCSS" \
+		["eslint"]="indique les erreurs sur le code JavaScript à partir d'un standard" \
+		["eslint-fix"]="fixe le code JavaScript à partir d'un standard" \
+		["phpcbf"]="fixe le code PHP à partir d'un standard" \
+		["phpcs"]="indique les erreurs de code non corrigé par PHPCBF" \
+		["phpcs-onlywarning"]="indique les erreurs de code non corrigé par PHPCBF" \
+		["phpcs-onlyerror"]="indique les erreurs de code non corrigé par PHPCBF" \
+		["phploc"]="phploc" \
+		["phpmd"]="indique quand le code PHP contient des erreurs de syntaxes ou des erreurs" \
+		["phpmnd"]="Si des chiffres sont utilisé dans le code PHP, il est conseillé d'utiliser des constantes" \
+		["phpstan"]="regarde si le code PHP ne peux pas être optimisé" \
+		["twig"]="indique les erreurs de code de twig" \
+		["container"]="indique les erreurs de code de container" \
+		["yaml"]="indique les erreurs de code de yaml" \
+	)
 endif
 
 .PHONY: messenger
@@ -221,10 +233,12 @@ else ifeq ($(COMMANDS_ARGS),simple-phpunit)
 	${COMPOSER_EXEC} run simple-phpunit
 else
 	@printf "${MISSING_ARGUMENTS}" "tests"
-	@printf "${NEED}" "launch" "Launch all tests"
-	@printf "${NEED}" "behat" "Lance les tests behat"
-	@printf "${NEED}" "simple-phpunit-unit-integration" "lance les tests phpunit"
-	@printf "${NEED}" "simple-phpunit" "lance les tests phpunit"
+	$(call array_arguments, \
+		["launch"]="Launch all tests" \
+		["behat"]="Lance les tests behat" \
+		["simple-phpunit-unit-integration"]="lance les tests phpunit" \
+		["simple-phpunit"]="lance les tests phpunit" \
+	)
 endif
 
 translations: isdocker ## update translation
