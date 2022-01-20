@@ -33,6 +33,7 @@
     "@symfony/webpack-encore": "0.33.0",
     "generate-changelog": "1.8.0",
     "jscpd": "3.3.25",
+    "sass": "^1.49.0",
     "sass-loader": "11.0.1",
     "webpack-notifier": "1.13.0"
   }
