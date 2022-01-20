@@ -1,5 +1,4 @@
 let Encore = require('@symfony/webpack-encore');
-let dotenv = require ("dotenv");
 let fs = require('fs');
 
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
