@@ -246,3 +246,7 @@ translations: isdocker ## update translation
 
 workflow-png: isdocker ### generate workflow png
 	${SYMFONY_EXEC} workflow:dump $(COMMANDS_ARGS) | dot -Tpng -o $(COMMANDS_ARGS).png
+
+
+bddset: ## Set bdd
+	@cp database_init/01_symfony.sql lampy/mariadb_init/01_symfony.sql
