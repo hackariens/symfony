@@ -10,8 +10,8 @@ DOCKER_EXECPHP := @$(DOCKER_EXEC) $(PHPFPMFULLNAME)
 SUPPORTED_COMMANDS := workflow-png tests messenger linter install geocode env encore composer bdd
 SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
 ifneq "$(SUPPORTS_MAKE_ARGS)" ""
-  COMMAND_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(COMMAND_ARGS):;@:)
+  COMMANDS_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(COMMANDS_ARGS):;@:)
 endif
 
 SYMFONY_EXEC := ${DOCKER_EXECPHP} symfony console
@@ -80,10 +80,10 @@ else
 endif
 
 encore: node_modules ##" Script for Encore
-ifeq ($(COMMAND_ARGS),dev)
+ifeq ($(COMMANDS_ARGS),dev)
 	@npm rebuild node-sass
 	@npm run encore-dev
-else ifeq ($(COMMAND_ARGS),watch)
+else ifeq ($(COMMANDS_ARGS),watch)
 	@npm run encore-watch
 else
 	@printf "${MISSING_ARGUMENTS}" "encore"
@@ -94,9 +94,9 @@ else
 endif
 
 env: apps/.env ### Scripts Installation environnement
-ifeq ($(COMMAND_ARGS),dev)
+ifeq ($(COMMANDS_ARGS),dev)
 	@sed -i 's/APP_ENV=prod/APP_ENV=dev/g' apps/.env
-else ifeq ($(COMMAND_ARGS),prod)
+else ifeq ($(COMMANDS_ARGS),prod)
 	@sed -i 's/APP_ENV=dev/APP_ENV=prod/g' apps/.env
 	@rm -rf apps/vendor
 	@make composer prod -i
@@ -109,7 +109,7 @@ else
 endif
 
 install: apps/.env ### installation
-ifeq ($(COMMAND_ARGS),all)
+ifeq ($(COMMANDS_ARGS),all)
 	@make node_modules -i
 	@make docker deploy -i
 	@make sleep 60 -i
@@ -117,7 +117,7 @@ ifeq ($(COMMAND_ARGS),all)
 	@make assets -i
 	@make encore dev -i
 	@make linter all -i
-else ifeq ($(COMMAND_ARGS),dev)
+else ifeq ($(COMMANDS_ARGS),dev)
 	@make install all
 	@make bdd fixtures -i
 else
@@ -129,7 +129,7 @@ else
 endif
 
 linter: node_modules isdocker apps/phploc.phar apps/phpmd.phar ### Scripts Linter
-ifeq ($(COMMAND_ARGS),all)
+ifeq ($(COMMANDS_ARGS),all)
 	@make linter eslint -i
 	@make linter twig -i
 	@make linter container -i
@@ -143,7 +143,7 @@ else ifeq ($(COMMANDS_ARGS),phpaudit)
 	@make linter phpmd -i
 	@make linter phpmnd -i
 	@make linter phpstan -i
-else ifeq ($(COMMAND_ARGS),readme)
+else ifeq ($(COMMANDS_ARGS),readme)
 	@npm run linter-markdown README.md
 else ifeq ($(COMMANDS_ARGS),stylelint)
 	@npm run stylelint
@@ -160,9 +160,9 @@ else ifeq ($(COMMANDS_ARGS),eslint-fix)
 else ifeq ($(COMMANDS_ARGS),composer)
 	@make composer validate -i
 	@make composer outdated -i
-else ifeq ($(COMMAND_ARGS),eslint-fix)
+else ifeq ($(COMMANDS_ARGS),eslint-fix)
 	@npm run eslint-fix
-else ifeq ($(COMMAND_ARGS),phpcbf)
+else ifeq ($(COMMANDS_ARGS),phpcbf)
 	${COMPOSER_EXEC} run phpcbf
 else ifeq ($(COMMANDS_ARGS),phpcs)
 	${COMPOSER_EXEC} run phpcs
@@ -170,19 +170,19 @@ else ifeq ($(COMMANDS_ARGS),phpcs-onlywarning)
 	${COMPOSER_EXEC} run phpcs-onlywarning
 else ifeq ($(COMMANDS_ARGS),phpcs-onlyerror)
 	${COMPOSER_EXEC} run phpcs-onlyerror
-else ifeq ($(COMMAND_ARGS),phploc)
+else ifeq ($(COMMANDS_ARGS),phploc)
 	$(PHP_EXEC) phploc.phar src
-else ifeq ($(COMMAND_ARGS),phpmd)
+else ifeq ($(COMMANDS_ARGS),phpmd)
 	$(PHP_EXEC) -d error_reporting=24575 phpmd.phar src,features/bootstrap,tests ansi phpmd.xml
-else ifeq ($(COMMAND_ARGS),phpmnd)
+else ifeq ($(COMMANDS_ARGS),phpmnd)
 	${COMPOSER_EXEC} run phpmnd
-else ifeq ($(COMMAND_ARGS),phpstan)
+else ifeq ($(COMMANDS_ARGS),phpstan)
 	${PHP_EXEC} -d memory_limit=-1 -n ./bin/phpstan analyse src
-else ifeq ($(COMMAND_ARGS),twig)
+else ifeq ($(COMMANDS_ARGS),twig)
 	${SYMFONY_EXEC} lint:twig templates
-else ifeq ($(COMMAND_ARGS),container)
+else ifeq ($(COMMANDS_ARGS),container)
 	${SYMFONY_EXEC} lint:container
-else ifeq ($(COMMAND_ARGS),yaml)
+else ifeq ($(COMMANDS_ARGS),yaml)
 	${SYMFONY_EXEC} lint:yaml config
 else
 	@printf "${MISSING_ARGUMENTS}" "linter"
@@ -245,4 +245,4 @@ translations: isdocker ## update translation
 	${SYMFONY_EXEC} translation:update --force --format=yml fr
 
 workflow-png: isdocker ### generate workflow png
-	${SYMFONY_EXEC} workflow:dump $(COMMAND_ARGS) | dot -Tpng -o $(COMMAND_ARGS).png
+	${SYMFONY_EXEC} workflow:dump $(COMMANDS_ARGS) | dot -Tpng -o $(COMMANDS_ARGS).png
