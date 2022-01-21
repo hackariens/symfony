@@ -52,29 +52,3 @@ jobs:
         run: make sleep 60
       - name: 'docker ls'
         run: make docker ls
-      - name: linter readme.md
-        run: make linter readme
-      - name: linter PHP Code Sniffer
-        run: make linter phpcs-onlyerror
-      - name: linter PHP MD
-        run: make linter phpmd
-      - name: linter PHPMND
-        run: make linter phpmnd
-      - name: Add assets
-        run: make assets
-      - name: Test lancement bootstrap
-        run: make encore dev
-      - name: Linter twig
-        run: make linter twig
-      - name: Linter yaml
-        run: make linter yaml
-      # - name: linter phpstan
-      #   run: make linter phpstan
-      - name: 'Composer install'
-        run: make composer dev
-      # - name: 'BDD MIGRATE'
-      #   run: make bdd migrate
-      # - name: 'Run the fixtures'
-      #   run: make bdd fixtures
-      - name: Run Acceptance Tests
-        run: make tests behat
