@@ -19,10 +19,23 @@ services:
     volumes:
       - ${PWD}/apps:/var/www/
       - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    environment:
+      APP_ENV: dev
+      APP_SECRET: "6fc13c15dc2208ac54cfd2f3b348dbc7"
+      MAILER_DSN: "smtp://mailhog:1025"
+      MESSENGER_TRANSPORT_DSN: "doctrine://default"
+      LOCK_DNS: semaphore
+      DATABASE_BDD: symfony_bdd
+      DATABASE_USER: symfony
+      DATABASE_PASSWORD: password
+      DATABASE_URL: "mysqli://symfony:password@mariadb:3306/symfony_bdd"
     networks:
       - serverlampy
     depends_on:
       - mariadb
+      - mercure
+      - mailhog
+      - redis
     deploy:
       restart_policy:
         condition: none
@@ -49,9 +62,20 @@ services:
       - mariadb
       - mercure
       - mailhog
+      - redis
     volumes:
       - ${PWD}/apps:/var/www/
       - ${PWD}/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    environment:
+      APP_ENV: dev
+      APP_SECRET: "6fc13c15dc2208ac54cfd2f3b348dbc7"
+      MAILER_DSN: "smtp://mailhog:1025"
+      MESSENGER_TRANSPORT_DSN: "doctrine://default"
+      LOCK_DNS: semaphore
+      DATABASE_BDD: symfony_bdd
+      DATABASE_USER: symfony
+      DATABASE_PASSWORD: password
+      DATABASE_URL: "mysqli://symfony:password@mariadb:3306/symfony_bdd"
     networks:
       - net
       - serverlampy
