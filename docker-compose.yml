@@ -14,7 +14,7 @@ volumes:
 
 services:
   phpfpmexec:
-    image: koromerzhin/phpfpm:8.0.9-symfony
+    image: koromerzhin/phpfpm:8.0.15
     command: sh -c "composer install"
     volumes:
       - ${PWD}/apps:/var/www/
@@ -57,7 +57,7 @@ services:
         - "traefik.http.routers.symfony.rule=HostRegexp(`symfony.traefik.me`, `symfony.{ip:.*}.traefik.me`)"
         - "traefik.http.services.symfony.loadbalancer.server.port=80"
   phpfpm:
-    image: koromerzhin/phpfpm:8.0.9-symfony
+    image: koromerzhin/phpfpm:8.0.15
     depends_on:
       - mariadb
       - mercure
