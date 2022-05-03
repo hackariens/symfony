@@ -29,9 +29,14 @@ docker swarm
 Hosts:
 
 - symfony.traefik.me
-- mailhog-symfony.traefik.me
-- mercure-symfony.traefik.me
-- phpmyadmin-symfony.traefik.me
+
+## Download
+
+```sh
+git clone git@github.com:koromerzhin/template-symfony.git template-symfony
+cd template-symfony
+git submodule update --init
+```
 
 ## Install
 
