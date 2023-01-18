@@ -1,0 +1,32 @@
+version: "3.4"
+networks:
+  proxylampy:
+    external: true
+  serverlampy:
+    external: true
+services:
+  apache:
+    networks:
+      - net
+      - proxylampy
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.symfony.rule=Host(`symfony.traefik.me`)"
+        - "traefik.http.routers.symfony-tls.tls.domains[0].main=symfony.traefik.me"
+        - "traefik.http.routers.symfony.tls=true"
+        - "traefik.http.services.symfony.loadbalancer.server.port=80"
+  phpfpm:
+    environment:
+      APP_ENV: dev
+      APP_SECRET: "6fc13c15dc2208ac54cfd2f3b348dbc7"
+      MAILER_DSN: "smtp://mailhog:1025"
+      MESSENGER_TRANSPORT_DSN: "doctrine://default"
+      LOCK_DNS: semaphore
+      DATABASE_BDD: symfony_bdd
+      DATABASE_USER: symfony
+      DATABASE_PASSWORD: password
+      DATABASE_URL: "mysqli://symfony:password@mariadb:3306/symfony_bdd"
+    networks:
+      - net
+      - serverlampy
