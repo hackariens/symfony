@@ -36,6 +36,10 @@ git clone --recurse-submodules git@github.com:hackariens/symfony.git symfony
 cd symfony
 ```
 
+## Environnment
+
+Edit .env with .env.example
+
 ## Install
 
 ```sh
