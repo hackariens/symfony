@@ -1,13 +1,8 @@
 version: "3.4"
-
 networks:
   net:
     driver: overlay
     attachable: true
-
-volumes:
-  mariadb_data:
-
 services:
   apache:
     image: httpd:2.4.46
