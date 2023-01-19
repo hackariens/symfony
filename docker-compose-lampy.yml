@@ -19,7 +19,7 @@ services:
   phpfpm:
     environment:
       APP_ENV: dev
-      APP_SECRET: "6fc13c15dc2208ac54cfd2f3b348dbc7"
+      APP_SECRET: "CHANGEME"
       MAILER_DSN: "smtp://mailhog:1025"
       MESSENGER_TRANSPORT_DSN: "doctrine://default"
       LOCK_DNS: semaphore
