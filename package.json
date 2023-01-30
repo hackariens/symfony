@@ -16,6 +16,7 @@
     "composer:suggests": "docker exec -ti $(npx korojscommands docker_getname-container --container phpfpm) symfony composer suggests --by-suggestion",
     "composer:update": "docker exec -ti $(npx korojscommands docker_getname-container --container phpfpm) symfony composer update",
     "composer:validate": "docker exec -ti $(npx korojscommands docker_getname-container --container phpfpm) symfony composer validate",
+    "create:apps": "docker container run -v $(pwd)/:/var/www --user $(id -u):$(id -g) -it $(npx korojscommands docker_get-image --key phpfpm) composer create-project symfony/skeleton:\"6.2.*\" apps",
     "docker:deploy": "korojscommands docker_deploy",
     "docker:getpull-image": "korojscommands docker_getpull-image",
     "docker:ls": "korojscommands docker_ls",
@@ -66,7 +67,7 @@
   },
   "homepage": "https://github.com/hackariens/symfony#readme",
   "dependencies": {
-    "korojscommands": "^1.2.11"
+    "korojscommands": "^1.2.12"
   },
   "devDependencies": {
     "@symfony/webpack-encore": "0.33.0",
