@@ -5,7 +5,7 @@ networks:
     attachable: true
 services:
   apache:
-    image: httpd:2.4.55
+    image: httpd:2.4.57
     depends_on:
       - phpfpm
     volumes:
