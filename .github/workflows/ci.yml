@@ -74,18 +74,18 @@ jobs:
       
       - name: Setup database and infrastructure
         run: |
-          task labstag:copysql
+          task symfony:copysql
           cd lampy && task lampy:exec
       
       - name: Deploy containers
         run: |
           task create:apps
-          task labstag:set-env-ids
-          task labstag:getpull-image
-          task labstag:getapacheconf
-          task labstag:install-first
-          task labstag:deploy
-          task labstag:waiting
+          task symfony:set-env-ids
+          task symfony:getpull-image
+          task symfony:getapacheconf
+          task symfony:install-first
+          task symfony:deploy
+          task symfony:waiting
       # === LINTING PHASE ===
       - name: Frontend linting
         run: |
@@ -102,8 +102,8 @@ jobs:
       
       - name: Setup PHP tools and permissions
         run: |
-          task labstag:download-phar
-          task labstag:ls
+          task symfony:download-phar
+          task symfony:ls
           sudo chown -R $USER:$USER ./apps
           sudo chmod -R 755 ./apps
           task symfony:about
@@ -148,7 +148,7 @@ jobs:
         run: |
           sudo chown -R $USER:$USER ./apps/public
           sudo chmod -R 755 ./apps/public
-          task labstag:assets
+          task symfony:assets
       
       - name: Database setup
         run: |
@@ -158,7 +158,7 @@ jobs:
           task doctrine:fixtures
       
       - name: Cleanup and test preparation
-        run: task labstag:delete-oldfiles
+        run: task symfony:delete-oldfiles
       
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
