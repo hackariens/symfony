@@ -59,16 +59,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
       
-      - name: Build assets
-        run: npm run encore:build
-        env:
-          NODE_ENV: production
-      
       - name: Setup environment files
         run: |
-          cp apps/.env.test apps/.env
           cp .env.example .env
-          echo "APP_ENV=test" >> apps/.env
       
       # === INFRASTRUCTURE PHASE ===
       - name: Setup Docker cache
