@@ -1,6 +1,8 @@
 /node_modules
 /apps
 .env
-/install
 docker-compose-*.yml
 !docker-compose-lampy.yml
+/.symfony5
+.gitconfig
+/.composer
