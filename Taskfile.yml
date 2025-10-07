@@ -1,0 +1,833 @@
+version: 3
+
+# Taskfile principal - Tâches globales et inclusions
+# Charge automatiquement les variables depuis le fichier .env s'il existe
+dotenv: [ '.env' ]
+
+includes:
+  docker: ./taskfiles/docker/Taskfile.yml
+  utils: ./taskfiles/utils/Taskfile.yml
+  env: ./taskfiles/env/Taskfile.yml
+  nodejs: ./taskfiles/nodejs/Taskfile.yml
+  download: ./taskfiles/download/Taskfile.yml
+
+vars:
+  # Variables avec valeurs par défaut depuis .env ou valeurs de fallback
+  PROJECT_NAME: '{{.PROJECT_NAME | default "symfony"}}'
+  PROJECT_VERSION: '1.0.0'
+  ENVIRONMENT: '{{.ENVIRONMENT | default "development"}}'
+  STACK_NAME: '{{.STACK | default "symfony"}}'
+  FOLDERSQL: '{{.FOLDERSQL | default "database_init"}}'
+  FILESQL: '{{.FILESQL | default "dump.sql"}}'
+  FOLDERLAMPY: '{{.FOLDERLAMPY | default "lampy"}}'
+  SERVERNAME: '{{.SERVERNAME | default "symfony.traefik.me"}}'
+  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose.yml"}}'
+
+tasks:
+  default:
+    desc: "Affiche l'aide et les tâches disponibles"
+    silent: true
+    cmds:
+    - echo "🛠️  Collection de Taskfiles pour le développement"
+    - echo ""
+    - echo "Tâches globales disponibles :"
+    - task --list
+    - echo ""
+
+  info:
+    desc: "Affiche les informations du projet avec les variables d'environnement"
+    silent: true
+    cmds:
+    - |
+      echo "🛠️  {{.PROJECT_NAME}} v{{.PROJECT_VERSION}} - Collection de Taskfiles"
+      echo "Environnement: {{.ENVIRONMENT}}"
+
+  help:
+    desc: "Affiche l'aide détaillée"
+    aliases: [ h ]
+    cmds:
+    - task: default
+
+  symfony:fix-permissions:
+    desc: "Corrige les permissions des fichiers symfony (utilisation manuelle si nécessaire)"
+    silent: true
+    cmds:
+    - chmod -R 755 ./apps
+    - chmod -R 777 ./apps/var
+    - chmod -R 777 ./apps/public/uploads
+
+  symfony:getapacheconf:
+    desc: "Récupère la configuration Apache depuis l'image Docker"
+    silent: true
+    cmds:
+    - rm -rf ./conf/apache2 || true
+    - docker create --name symfony-php koromerzhin/php:8.4.3-apache-symfony 
+    - mkdir -p ./conf/apache2
+    - docker cp symfony-php:/etc/apache2/sites-available/000-default.conf ./conf/apache2/000-default.conf
+    - docker cp symfony-php:/etc/apache2/apache2.conf ./conf/apache2/apache2.conf
+    - docker rm -f symfony-php
+
+    - sed -ri -e 's|\$\{APACHE_DOCUMENT_ROOT\}|/var/www/public|g' ./conf/apache2/000-default.conf
+    - sed -ri -e 's|#ServerName www.example.com|ServerName {{.SERVERNAME}}|g' ./conf/apache2/000-default.conf
+    - sed -ri -e 's|\$\{APACHE_DOCUMENT_ROOT\}|/var/www/public|g' ./conf/apache2/apache2.conf
+    - |
+      sed -i '/^# Global configuration/a\
+      #\
+      # ServerName: Set the servers fully qualified domain name globally\
+      # This suppresses the warning about not being able to reliably determine\
+      # the servers fully qualified domain name\
+      #\
+      ServerName {{.SERVERNAME}}' ./conf/apache2/apache2.conf
+
+  symfony:copysql:
+    desc: "Copie le fichier SQL de dump dans le dossier symfony"
+    silent: true
+    cmds:
+    - task: utils:file:copy
+      vars:
+        SOURCE_FILE: ./{{.FOLDERSQL}}/{{.FILESQL}}
+        DEST_DIR: "{{.FOLDERLAMPY}}/mariadb_init/"
+        FORCE: true
+
+  symfony:getpull-image:
+    desc: "Télécharge les images Docker définies dans le docker-compose.yml"
+    silent: true
+    cmds:
+    - task: docker:images:pull
+      vars:
+        COMPOSE_FILE: "{{.DOCKERCOMPOSEFILE}}"
+
+  symfony:deploy:
+    desc: "Déploie les stacks Docker définies dans les fichiers docker-compose"
+    silent: true
+    cmds:
+    - task: docker:stack:deploy
+      vars:
+        COMPOSE_FILE: "{{.DOCKERCOMPOSEFILE}}"
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  symfony:install-first:
+    desc: "Installation initiale de Composer et des dépendances"
+    silent: true
+    cmds:
+    - docker run --rm -v $(pwd)/apps:/var/www -w /var/www koromerzhin/php:8.4.3-apache-symfony symfony composer install
+
+  symfony:waiting:
+    desc: "Attend que les services soient opérationnels"
+    silent: true
+    cmds:
+    - task: docker:stack:check:containers:ready
+      vars:
+        CONTAINERS: "www"
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  symfony:ls:
+    desc: "Liste les stacks et services Docker"
+    silent: true
+    cmds:
+    - task: docker:stack:services
+      vars:
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  create:apps:
+    desc: "Crée un nouveau projet Symfony dans le dossier apps"
+    cmds:
+    - mkdir -p install
+    - docker run --rm -v $(pwd)/install:/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) koromerzhin/php:8.4.3-apache-symfony sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='7.3.x' --webapp"
+    - cp -r ./install/apps/ .
+
+  symfony:exec:
+    desc: "Exécute une commande dans un conteneur en cours d'exécution"
+    cmds:
+    - task: create:apps
+    - task: symfony:set-env-ids
+    - task: symfony:copysql
+    - task: symfony:getpull-image
+    - task: symfony:getapacheconf
+    - task: symfony:deploy
+    - task: symfony:waiting
+    - task: symfony:ls
+
+  symfony:download-phar:
+    desc: "Télécharger les différents fichiers phar"
+    cmds:
+    - task: download:php:tools
+      vars:
+        TOOLS_DIR: ./../apps
+
+  symfony:bash:
+    desc: "Ouvre un shell bash dans le conteneur www"
+    cmds:
+    - task: docker:stack:shell
+      vars:
+        STACK_NAME: "symfony"
+        SERVICE_NAME: "www"
+
+  symfony:cmd-exec:
+    desc: "Affiche les informations Symfony"
+    silent: true
+    vars:
+      INTERACTIVE: '{{.INTERACTIVE | default "true"}}'
+    cmds:
+    - task: docker:stack:exec
+      vars:
+        STACK_NAME: "symfony"
+        SERVICE_NAME: "www"
+        COMMAND: "{{.COMMAND}}"
+        INTERACTIVE: "{{.INTERACTIVE}}"
+
+  symfony:about:
+    desc: "Affiche les informations Symfony"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "about"
+
+  symfony:console:
+    desc: "Exécute une commande Symfony"
+    silent: true
+    vars:
+      CMD: '{{.CMD | default ""}}'
+      # Désactiver l'interactivité en environnement CI/CD
+      INTERACTIVE: '{{if or (eq (env "DOCKER_INTERACTIVE") "false") (eq (env "CI") "true") (eq (env "GITHUB_ACTIONS") "true")}}false{{else}}true{{end}}'
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "symfony console {{.CMD}}"
+
+  symfony:assets:
+    desc: "Installe les assets Symfony"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "assets:install public --symlink --relative"
+
+  symfony:cache-clear:
+    desc: "Vide le cache Symfony"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "cache:clear"
+
+  composer:exec:
+    desc: "Exécute une commande Composer"
+    silent: true
+    vars:
+      CMD: '{{.CMD | default ""}}'
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "symfony composer {{.CMD}}"
+
+  composer:fund:
+    desc: "Affiche les liens de financement des dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "fund"
+
+  composer:install:
+    desc: "Installe les dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "install"
+
+  composer:outdated:
+    desc: "Affiche les dépendances obsolètes"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "outdated"
+
+  composer:suggests:
+    desc: "Affiche les suggestions des dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "suggests"
+
+  composer:update:
+    desc: "Met à jour les dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "update"
+
+  doctrine:fixtures:
+    desc: "Charge les fixtures Doctrine"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "doctrine:fixtures:load --no-interaction"
+
+  doctrine:migrate:
+    desc: "Exécute les migrations Doctrine"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "doctrine:migrations:migrate -n"
+
+  doctrine:schema:update:
+    desc: "Met à jour le schéma de la base de données"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "doctrine:schema:update --dump-sql --force"
+
+  doctrine:schema:validate:
+    desc: "Valide le schéma de la base de données"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "doctrine:schema:validate"
+
+  composer:validate:
+    desc: "Valide le fichier composer.json"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "validate"
+
+  composer:install:dev:
+    desc: "Installe les dépendances Composer pour le développement"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "install --no-progress --prefer-dist --optimize-autoloader"
+
+  composer:install:prod:
+    desc: "Installe les dépendances Composer pour la production"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "install --no-progress --prefer-dist --optimize-autoloader --no-dev"
+
+  ecs-check:
+    desc: "Vérifie le code avec PHP CS Fixer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "run ecs-check"
+
+  ecs-fix:
+    desc: "Corrige le code avec PHP CS Fixer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "run ecs-fix"
+
+  symfony:delete-oldfiles:
+    desc: "Supprime les anciens fichiers temporaires"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "symfony:delete-oldfiles"
+
+  symfony:geocode-install:
+    desc: "Installe les données de géocodage"
+    silent: true
+    vars:
+      COUNTRY: '{{.COUNTRY | default ""}}'
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "symfony:geocode-install {{.COUNTRY}}"
+
+  lint:container:
+    desc: "Vérifie la syntaxe des fichiers de configuration de services"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "lint:container"
+
+  lint:php-cs-fixer:
+    desc: "Vérifie le code avec PHP CS Fixer"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 bin/php-cs-fixer fix src"
+
+  lint:php-cs-fixer:dry:
+    desc: "Vérifie le code avec PHP CS Fixer en mode dry-run"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 bin/php-cs-fixer fix src --dry-run -v --diff"
+
+  lint:phpcbf:
+    desc: "Corrige le code avec PHP Code Beautifier and Fixer"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 bin/phpcbf -d memory_limit=-1 --report=diff -p --extensions=php --standard=phpcs.xml"
+
+  lint:phpcs:
+    desc: "Vérifie le code avec PHP CodeSniffer"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 bin/phpcs --report=full --extensions=php src --standard=phpcs.xml"
+
+  lint:phpcs:error:
+    desc: "Vérifie le code avec PHP CodeSniffer et affiche uniquement les erreurs"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 bin/phpcs  --report=full --extensions=php --warning-severity=0 --standard=phpcs.xml"
+
+  lint:phpcs:warning:
+    desc: "Vérifie le code avec PHP CodeSniffer et affiche uniquement les avertissements"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 bin/phpcs --report=full --extensions=php --error-severity=0 --standard=phpcs.xml"
+
+  lint:phpdoc:
+    desc: "Vérifie les annotations PHPDoc avec phpDocumentor"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 phpDocumentor.phar -d src -t public/docs"
+
+  lint:phploc:
+    desc: "Analyse la complexité du code avec phploc"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 phploc.phar src"
+
+  lint:phpmd:
+    desc: "Vérifie le code avec PHP Mess Detector"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "php -d memory_limit=-1 -d error_reporting=24575 bin/phpmd config,features,public,src,tests ansi phpmd.xml"
+
+  lint:phpmnd:
+    desc: "Détecte les noms magiques avec PHPMND"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        COMMAND: "run phpmnd"
+
+  phpstan:
+    desc: "Analyse le code avec PHPStan"
+    internal: true
+    silent: true
+    vars:
+      LEVEL: '{{.LEVEL | default "0"}}'
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "bin/phpstan analyse -l {{.LEVEL}}"
+
+  phpstan:0:
+    desc: "Analyse le code avec PHPStan au niveau 0"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "0"
+
+  phpstan:1:
+    desc: "Analyse le code avec PHPStan au niveau 1"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "1"
+
+  phpstan:2:
+    desc: "Analyse le code avec PHPStan au niveau 2"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "2"
+
+  phpstan:3:
+    desc: "Analyse le code avec PHPStan au niveau 3"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "3"
+
+  phpstan:4:
+    desc: "Analyse le code avec PHPStan au niveau 4"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "4"
+
+  phpstan:5:
+    desc: "Analyse le code avec PHPStan au niveau 5"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "5"
+
+  phpstan:6:
+    desc: "Analyse le code avec PHPStan au niveau 6"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "6"
+
+  phpstan:7:
+    desc: "Analyse le code avec PHPStan au niveau 7"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "7"
+
+  phpstan:8:
+    desc: "Analyse le code avec PHPStan au niveau 8"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "8"
+
+  phpstan:9:
+    desc: "Analyse le code avec PHPStan au niveau 9"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "9"
+
+  phpstan:10:
+    desc: "Analyse le code avec PHPStan au niveau 10"
+    silent: true
+    cmds:
+    - task: phpstan
+      vars:
+        LEVEL: "10"
+
+  lint:twig:
+    desc: "Vérifie les templates Twig"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "lint:twig templates"
+
+  lint:yaml:
+    desc: "Vérifie les fichiers YAML"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "lint:yaml config"
+
+  symfony:movies-add:
+    desc: "Ajoute des films de démonstration"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "symfony:movies-add"
+
+  symfony:movies-update:
+    desc: "Met à jour les films de démonstration"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "symfony:movies-update"
+
+  messenger:consume:
+    desc: "Démarre le consommateur de messages Messenger"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "messenger:consume async -vv"
+
+  rector:
+    desc: "Refactorise le code avec Rector"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "run rector"
+
+  rector:dry:
+    desc: "Refactorise le code avec Rector en mode dry-run"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "run rector --dry-run"
+
+  star:get:
+    desc: "Télécharge des données de stars"
+    silent: true
+    cmds:
+    - gh api --paginate /user/starred --jq '.' | jq -s > apps/private/stars.json
+
+  star:update:
+    desc: "Met à jour les données de stars"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "symfony:star-update"
+
+  star:
+    desc: "Télécharge et met à jour les données de stars"
+    silent: true
+    cmds:
+    - task: star:get
+    - task: star:update
+
+  test:behat:
+    desc: "Exécute les tests Behat"
+    silent: true
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        CMD: "php -d memory_limit=-1 behat.phar --config behat.yaml"
+
+  test:phpunit:
+    desc: "Exécute les tests PHPUnit"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "run simple-phpunit"
+
+  test:phpunit:unit-integration:
+    desc: "Exécute les tests unitaires et d'intégration PHPUnit"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "run simple-phpunit-unit-integration"
+
+  translation:
+    desc: "Gère les traductions avec Symfony"
+    silent: true
+    vars:
+      LOCALE: '{{.LOCALE | default "fr"}}'
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "translation:extract --force {{.LOCALE}}"
+
+  workflow:dump:
+    desc: "Génère le workflow des entités au format PNG via fichier DOT temporaire"
+    silent: true
+    vars:
+      ENTITY: '{{.ENTITY | default "chapter"}}'
+      FILE: '{{.ENTITY}}.png'
+      DOT_FILE: '{{.ENTITY}}.dot'
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "sh -c 'symfony console workflow:dump {{.ENTITY}} > {{.DOT_FILE}}'"
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "sh -c 'dot -Tpng {{.DOT_FILE}} -o {{.FILE}}'"
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "rm {{.DOT_FILE}} && echo 'Fichier temporaire DOT supprimé'"
+
+  workflow:dump:chapter:
+    desc: "Affiche le workflow des chapitres"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "chapter"
+
+  workflow:dump:edito:
+    desc: "Affiche le workflow des éditos"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "edito"
+
+  workflow:dump:story:
+    desc: "Affiche le workflow des histoires"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "story"
+
+  workflow:dump:memo:
+    desc: "Affiche le workflow des mémos"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "memo"
+
+  workflow:dump:post:
+    desc: "Affiche le workflow des posts"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "post"
+
+  workflow:dump:page:
+    desc: "Affiche le workflow des pages"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "page"
+
+  workflow:dump:user:
+    desc: "Affiche le workflow des utilisateurs"
+    silent: true
+    cmds:
+    - task: workflow:dump
+      vars:
+        ENTITY: "user"
+
+  workflow:dump:all:
+    desc: "Affiche les workflows de toutes les entités"
+    silent: true
+    cmds:
+    - echo "🚀 Génération de tous les workflows..."
+    - echo ""
+    - task: workflow:dump:chapter
+    - task: workflow:dump:edito
+    - task: workflow:dump:story
+    - task: workflow:dump:memo
+    - task: workflow:dump:post
+    - task: workflow:dump:page
+    - task: workflow:dump:user
+    - echo ""
+    - echo "🎉 Génération terminée !"
+    ignore_error: true
+
+  lint:all:
+    desc: "Vérifie le code avec tous les outils de linting"
+    silent: true
+    cmds:
+    - task: cmd:validate_outdated
+    - task: ecs-fix
+    - task: lint:phpcbf
+    - npm run eslint:fix
+    - npm run lint:stylelint:fix
+    - task: lint:twig
+    - task: lint:container
+    - task: lint:yaml
+    - task: lint:phpaudit
+    - npm run lint:markdown
+    - task: rector
+    ignore_error: true
+
+  lint:phpaudit:
+    desc: "Analyse le code avec PHP Audit"
+    silent: true
+    cmds:
+    - task: lint:phpcs
+    - task: lint:phpmd
+    - task: lint:phpmnd
+    - task: phpstan:0
+
+  cmd:validate_outdated:
+    desc: "Valide les dépendances obsolètes"
+    silent: true
+    cmds:
+    - task: composer:validate
+    - task: composer:outdated
+
+  cmd:install:all:
+    desc: "Installe toutes les dépendances et exécute les migrations"
+    silent: true
+    cmds:
+    - task: doctrine:migrate
+    - task: symfony:assets
+    - npm run encore:dev
+    - task: lint:all
+
+  cmd:install:bdd:
+    desc: "Installe la base de données avec les fixtures"
+    silent: true
+    cmds:
+    - task: doctrine:fixtures
+
+  cmd:install:dev:
+    desc: "Installe l'environnement de développement complet"
+    silent: true
+    cmds:
+    - task: download:phar
+    - task: cmd:install:all
+    - task: cmd:install:bdd
+
+  cmd:install:prod:
+    desc: "Installe l'environnement de production complet"
+    silent: true
+    cmds:
+    - task: cmd:install:all
+    - task: cmd:install:bdd
+    - npm run encore:build
+
+  data:
+    desc: "Installe les données de démonstration"
+    silent: true
+    cmds:
+    - task: doctrine:fixtures
+    - task: symfony:delete-oldfiles
+    - task: star
+    - task: symfony:movies-add
+
+  symfony:set-env-ids:
+    desc: "Met à jour les UID/GID dans le fichier .env"
+    silent: true
+    cmds:
+    - |
+      if ! grep -q "UID=" .env; then
+        echo "UID=$(id -u)" >> .env
+      else
+        sed -i "s/UID=.*/UID=$(id -u)/" .env
+      fi
+    - |
+      if ! grep -q "GID=" .env; then
+        echo "GID=$(id -g)" >> .env
+      else
+        sed -i "s/GID=.*/GID=$(id -g)/" .env
+      fi
+

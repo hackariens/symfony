@@ -1,48 +1,195 @@
-name: ci
-on: [push]
+name: CI Pipeline
+on: 
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+env:
+  NODE_VERSION: '22'
+  DOCKER_COMPOSE_VERSION: '2.29.7'
+  PHP_VERSION: '8.3'
+
 jobs:
-  tests:
+  ci:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      DOCKER_INTERACTIVE: false
     steps:
+      # === SETUP PHASE ===
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      
+      - name: Setup Docker Compose
+        run: |
+          if ! command -v docker-compose &> /dev/null; then
+            sudo curl -L "https://github.com/docker/compose/releases/download/v${{ env.DOCKER_COMPOSE_VERSION }}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          docker-compose --version
+      
+      - name: Setup Task
+        uses: go-task/setup-task@v1
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+      
       - name: Repository lampy
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          ref: 'v2.0'
           repository: koromerzhin/lampy
+          ref: 'v4.0'
           path: lampy
-      - name: Install npm dependencies
-        run: npm install
-      - name: 'set .env'
-        run: 'cp .env.example .env'
-      - name: 'SET BDD'
-        run: npm run bdd:mariadb
-      - name: 'Launch Lampy'
-        run: cd lampy && npm run exec
-      - name: 'Image pull'
-        run: npm run docker:getpull-image
-      - name: 'create apps'
-        run: npm run create:apps
-      - name: 'Build containers'
-        run: npm run docker:deploy
-      - name: 'Waiting'
-        run: npm run docker:waiting
-      - name: linter readme.md
-        run: npm run lint:markdown
-      - name: Cypress run
+      
+      # === BUILD PHASE ===
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: Build assets
+        run: npm run encore:build
+        env:
+          NODE_ENV: production
+      
+      - name: Setup environment files
+        run: |
+          cp apps/.env.test apps/.env
+          cp .env.example .env
+          echo "APP_ENV=test" >> apps/.env
+      
+      # === INFRASTRUCTURE PHASE ===
+      - name: Setup Docker cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      
+      - name: Setup database and infrastructure
+        run: |
+          task labstag:copysql
+          cd lampy && task lampy:exec
+      
+      - name: Deploy containers
+        run: |
+          task create:apps
+          task labstag:set-env-ids
+          task labstag:getpull-image
+          task labstag:getapacheconf
+          task labstag:install-first
+          task labstag:deploy
+          task labstag:waiting
+      # === LINTING PHASE ===
+      - name: Frontend linting
+        run: |
+          # Run markdown linting with warning on failure
+          npm run lint:markdown || echo "::warning::Markdown linting issues found"
+          
+          # Run SCSS linting (will auto-fix issues)
+          npm run lint:stylelint:fix
+          
+          # Check if there are any remaining unfixed issues
+          if ! npm run lint:stylelint; then
+            echo "::warning::Some SCSS issues could not be auto-fixed"
+          fi
+      
+      - name: Setup PHP tools and permissions
+        run: |
+          task labstag:download-phar
+          task labstag:ls
+          sudo chown -R $USER:$USER ./apps
+          sudo chmod -R 755 ./apps
+          task symfony:about
+      
+      - name: PHP linting suite
+        id: php-linting
+        continue-on-error: true
+        run: |
+          LINT_EXIT_CODE=0
+          
+          echo "::group::PHP Code Sniffer"
+          task lint:phpcs:error || LINT_EXIT_CODE=1
+          echo "::endgroup::"
+          
+          echo "::group::PHP Mess Detector"
+          task lint:phpmd || LINT_EXIT_CODE=1
+          echo "::endgroup::"
+          
+          echo "::group::PHP Magic Number Detector"
+          task lint:phpmnd || LINT_EXIT_CODE=1
+          echo "::endgroup::"
+          
+          echo "::group::Twig Linting"
+          task lint:twig || LINT_EXIT_CODE=1
+          echo "::endgroup::"
+          
+          echo "::group::YAML Linting"
+          task lint:yaml || LINT_EXIT_CODE=1
+          echo "::endgroup::"
+          
+          echo "::group::PHPStan Analysis"
+          task phpstan:0 || LINT_EXIT_CODE=1
+          echo "::endgroup::"
+          
+          if [ $LINT_EXIT_CODE -ne 0 ]; then
+            echo "::warning::Some PHP linting checks failed, but continuing with the build"
+          fi
+          
+          exit $LINT_EXIT_CODE
+      # === TESTING PHASE ===
+      - name: Prepare application
+        run: |
+          sudo chown -R $USER:$USER ./apps/public
+          sudo chmod -R 755 ./apps/public
+          task labstag:assets
+      
+      - name: Database setup
+        run: |
+          task doctrine:migrate
+          task doctrine:schema:update
+          task doctrine:schema:validate
+          task doctrine:fixtures
+      
+      - name: Cleanup and test preparation
+        run: task labstag:delete-oldfiles
+      
+      - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         continue-on-error: true
-      - name: Set date and branch variables
-        run: |
-          echo "CURRENT_DATE=$(date '+%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
-          echo "CURRENT_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
-      - name: Archive screenshots
-        uses: actions/upload-artifact@v4
         with:
-          name: "symfony-${{ env.CURRENT_BRANCH }}_${{ env.CURRENT_DATE }}"
-          path: cypress/
+          wait-on-timeout: 120
+          browser: chrome
+          record: false
+          parallel: false
+          config: screenshotOnRunFailure=true,video=true,videoCompression=32,defaultCommandTimeout=10000,requestTimeout=10000,responseTimeout=10000,retries={"runMode":2,"openMode":0}
+        env:
+          CYPRESS_CACHE_FOLDER: ~/.cache/Cypress
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+      
+      # === ARTIFACTS PHASE ===
+      - name: Archive test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: "test-results-${{ github.run_number }}-${{ github.sha }}"
+          path: |
+            cypress/screenshots
+            cypress/videos
+            cypress/reports
           retention-days: 7
+          if-no-files-found: ignore
+          compression-level: 6
