@@ -133,9 +133,9 @@ tasks:
   create:apps:
     desc: "Crée un nouveau projet Symfony dans le dossier apps"
     cmds:
-    - mkdir -p install
-    - docker run --rm -v $(pwd)/install:/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) koromerzhin/php:8.4.3-apache-symfony sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
-    - cp -r ./install/apps/ .
+    - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) koromerzhin/php:8.4.3-apache-symfony sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
+    - rm -rf ./apps/.git
+    - rm -rf ./apps/.gitconfig
 
   symfony:exec:
     desc: "Exécute une commande dans un conteneur en cours d'exécution"

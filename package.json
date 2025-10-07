@@ -13,7 +13,7 @@
     "eslint": "eslint assets/js/",
     "lint:markdown": "markdownlint README.md",
     "lint:stylelint:fix": "stylelint assets/scss/*.scss --fix",
-    "lint:stylelint": "stylelint assets/scss/*.scss",
+    "lint:stylelint": "stylelint assets/scss/*.scss"
   },
   "repository": {
     "type": "git",
