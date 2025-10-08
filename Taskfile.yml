@@ -46,6 +46,7 @@ tasks:
   help:
     desc: "Affiche l'aide détaillée"
     aliases: [ h ]
+    silent: true
     cmds:
     - task: default
 
@@ -62,7 +63,7 @@ tasks:
     silent: true
     cmds:
     - rm -rf ./conf/apache2 || true
-    - docker create --name symfony-php koromerzhin/php:8.4.3-apache-symfony 
+    - docker create --name symfony-php koromerzhin/php:8.4.3-apache-symfony
     - mkdir -p ./conf/apache2
     - docker cp symfony-php:/etc/apache2/sites-available/000-default.conf ./conf/apache2/000-default.conf
     - docker cp symfony-php:/etc/apache2/apache2.conf ./conf/apache2/apache2.conf
@@ -132,6 +133,7 @@ tasks:
 
   create:apps:
     desc: "Crée un nouveau projet Symfony dans le dossier apps"
+    silent: true
     cmds:
     - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) koromerzhin/php:8.4.3-apache-symfony sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
     - rm -rf ./apps/.git
@@ -139,6 +141,7 @@ tasks:
 
   symfony:exec:
     desc: "Exécute une commande dans un conteneur en cours d'exécution"
+    silent: true
     cmds:
     - task: create:apps
     - task: symfony:set-env-ids
@@ -151,6 +154,7 @@ tasks:
 
   symfony:download-phar:
     desc: "Télécharger les différents fichiers phar"
+    silent: true
     cmds:
     - task: download:php:tools
       vars:
@@ -158,6 +162,7 @@ tasks:
 
   symfony:bash:
     desc: "Ouvre un shell bash dans le conteneur www"
+    silent: true
     cmds:
     - task: docker:stack:shell
       vars:
@@ -310,4 +315,3 @@ tasks:
       else
         sed -i "s/GID=.*/GID=$(id -g)/" .env
       fi
-
