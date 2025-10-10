@@ -4,16 +4,7 @@
   "description": "Template de site internet sous Symfony",
   "main": "index.js",
   "scripts": {
-    "create:apps": "docker container run -v $(pwd)/:/var/www --user $(id -u):$(id -g) $(npx korojscommands docker_get-image --key phpfpm) composer create-project symfony/skeleton:\"6.2.*\" apps --no-interaction",
-    "encore:build": "encore production --progress",
-    "encore:dev-server": "encore dev-server",
-    "encore:dev": "encore dev",
-    "encore:watch": "encore dev --watch",
-    "eslint:fix": "eslint assets/js/ --fix",
-    "eslint": "eslint assets/js/",
-    "lint:markdown": "markdownlint README.md",
-    "lint:stylelint:fix": "stylelint assets/scss/*.scss --fix",
-    "lint:stylelint": "stylelint assets/scss/*.scss"
+    "lint:markdown": "markdownlint README.md"
   },
   "repository": {
     "type": "git",
@@ -27,18 +18,9 @@
   },
   "homepage": "https://github.com/hackariens/symfony#readme",
   "devDependencies": {
-    "@symfony/webpack-encore": "^5.2.0",
-    "all-contributors-cli": "^3.1.1",
     "cypress": "^15.3.0",
-    "generate-changelog": "^1.8.0",
-    "gitmoji-changelog": "^1.1.0",
     "jscpd": "^4.0.5",
-    "license-checker": "^25.0.1",
     "markdownlint-cli": "^0.45.0",
-    "readme-md-generator": "^1.0.0",
-    "sass": "^1.49.0",
-    "sass-loader": "11.0.1",
-    "semantic-git-commit-cli": "^3.7.0",
     "webpack-notifier": "1.13.0",
     "yaml": "^2.8.1"
   }
