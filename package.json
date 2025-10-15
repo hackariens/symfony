@@ -1,6 +1,6 @@
 {
   "name": "@hackariens/symfony",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Template de site internet sous Symfony",
   "main": "index.js",
   "scripts": {
