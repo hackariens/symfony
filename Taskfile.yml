@@ -1,0 +1,322 @@
+version: 3
+
+# Taskfile principal - Tâches globales et inclusions
+# Charge automatiquement les variables depuis le fichier .env s'il existe
+dotenv: [ '.env' ]
+
+includes:
+  docker: ./taskfiles/docker/Taskfile.yml
+  utils: ./taskfiles/utils/Taskfile.yml
+  env: ./taskfiles/env/Taskfile.yml
+  nodejs: ./taskfiles/nodejs/Taskfile.yml
+  download: ./taskfiles/download/Taskfile.yml
+
+vars:
+  # Variables avec valeurs par défaut depuis .env ou valeurs de fallback
+  PROJECT_NAME: '{{.PROJECT_NAME | default "symfony"}}'
+  PROJECT_VERSION: '1.0.0'
+  ENVIRONMENT: '{{.ENVIRONMENT | default "development"}}'
+  STACK_NAME: '{{.STACK | default "symfony"}}'
+  FOLDERSQL: '{{.FOLDERSQL | default "database_init"}}'
+  FILESQL: '{{.FILESQL | default "dump.sql"}}'
+  FOLDERLAMPY: '{{.FOLDERLAMPY | default "lampy"}}'
+  SERVERNAME: '{{.SERVERNAME | default "symfony.traefik.me"}}'
+  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose.yml"}}'
+  SYMFONYVERSION: '{{.SYMFONYVERSION | default "7.3"}}'
+
+tasks:
+  default:
+    desc: "Affiche l'aide et les tâches disponibles"
+    silent: true
+    cmds:
+    - echo "🛠️  Collection de Taskfiles pour le développement"
+    - echo ""
+    - echo "Tâches globales disponibles :"
+    - task --list
+    - echo ""
+
+  lint:all:
+    desc: "Exécute tous les linters disponibles"
+    cmds:
+    - npm run lint:markdown
+
+  info:
+    desc: "Affiche les informations du projet avec les variables d'environnement"
+    silent: true
+    cmds:
+    - |
+      echo "🛠️  {{.PROJECT_NAME}} v{{.PROJECT_VERSION}} - Collection de Taskfiles"
+      echo "Environnement: {{.ENVIRONMENT}}"
+
+  help:
+    desc: "Affiche l'aide détaillée"
+    aliases: [ h ]
+    silent: true
+    cmds:
+    - task: default
+
+  symfony:fix-permissions:
+    desc: "Corrige les permissions des fichiers symfony (utilisation manuelle si nécessaire)"
+    silent: true
+    cmds:
+    - chmod -R 755 ./apps
+    - chmod -R 777 ./apps/var
+    - chmod -R 777 ./apps/public/uploads
+
+  symfony:getapacheconf:
+    desc: "Récupère la configuration Apache depuis l'image Docker"
+    silent: true
+    cmds:
+    - rm -rf ./conf/apache2 || true
+    - docker create --name symfony-php koromerzhin/php:8.4.3-apache-symfony
+    - mkdir -p ./conf/apache2
+    - docker cp symfony-php:/etc/apache2/sites-available/000-default.conf ./conf/apache2/000-default.conf
+    - docker cp symfony-php:/etc/apache2/apache2.conf ./conf/apache2/apache2.conf
+    - docker rm -f symfony-php
+
+    - sed -ri -e 's|\$\{APACHE_DOCUMENT_ROOT\}|/var/www/public|g' ./conf/apache2/000-default.conf
+    - sed -ri -e 's|#ServerName www.example.com|ServerName {{.SERVERNAME}}|g' ./conf/apache2/000-default.conf
+    - sed -ri -e 's|\$\{APACHE_DOCUMENT_ROOT\}|/var/www/public|g' ./conf/apache2/apache2.conf
+    - |
+      sed -i '/^# Global configuration/a\
+      #\
+      # ServerName: Set the servers fully qualified domain name globally\
+      # This suppresses the warning about not being able to reliably determine\
+      # the servers fully qualified domain name\
+      #\
+      ServerName {{.SERVERNAME}}' ./conf/apache2/apache2.conf
+
+  symfony:copysql:
+    desc: "Copie le fichier SQL de dump dans le dossier symfony"
+    silent: true
+    cmds:
+    - task: utils:file:copy
+      vars:
+        SOURCE_FILE: ./{{.FOLDERSQL}}/{{.FILESQL}}
+        DEST_DIR: "{{.FOLDERLAMPY}}/mariadb_init/"
+        FORCE: true
+
+  symfony:getpull-image:
+    desc: "Télécharge les images Docker définies dans le docker-compose.yml"
+    silent: true
+    cmds:
+    - task: docker:images:pull
+      vars:
+        COMPOSE_FILE: "{{.DOCKERCOMPOSEFILE}}"
+
+  symfony:deploy:
+    desc: "Déploie les stacks Docker définies dans les fichiers docker-compose"
+    silent: true
+    cmds:
+    - task: docker:stack:deploy
+      vars:
+        COMPOSE_FILE: "{{.DOCKERCOMPOSEFILE}}"
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  symfony:install-first:
+    desc: "Installation initiale de Composer et des dépendances"
+    silent: true
+    cmds:
+    - docker run --rm -v $(pwd)/apps:/var/www -w /var/www koromerzhin/php:8.4.3-apache-symfony symfony composer install
+
+  symfony:waiting:
+    desc: "Attend que les services soient opérationnels"
+    silent: true
+    cmds:
+    - task: docker:stack:check:containers:ready
+      vars:
+        CONTAINERS: "www"
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  symfony:ls:
+    desc: "Liste les stacks et services Docker"
+    silent: true
+    cmds:
+    - task: docker:stack:services
+      vars:
+        STACK_NAME: "{{.STACK_NAME}}"
+
+  create:apps:
+    desc: "Crée un nouveau projet Symfony dans le dossier apps"
+    silent: true
+    cmds:
+    - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) koromerzhin/php:8.4.3-apache-symfony sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
+    - rm -rf ./apps/.git
+    - rm -rf ./.gitconfig
+
+  symfony:exec:
+    desc: "Exécute une commande dans un conteneur en cours d'exécution"
+    silent: true
+    cmds:
+    - task: create:apps
+    - task: symfony:set-env-ids
+    - task: symfony:copysql
+    - task: symfony:getpull-image
+    - task: symfony:getapacheconf
+    - task: symfony:deploy
+    - task: symfony:waiting
+    - task: symfony:ls
+
+  symfony:download-phar:
+    desc: "Télécharger les différents fichiers phar"
+    silent: true
+    cmds:
+    - task: download:php:tools
+      vars:
+        TOOLS_DIR: ./../apps
+
+  symfony:bash:
+    desc: "Ouvre un shell bash dans le conteneur www"
+    silent: true
+    cmds:
+    - task: docker:stack:shell
+      vars:
+        STACK_NAME: "symfony"
+        SERVICE_NAME: "www"
+
+  symfony:cmd-exec:
+    desc: "Affiche les informations Symfony"
+    silent: true
+    vars:
+      INTERACTIVE: '{{.INTERACTIVE | default "true"}}'
+    cmds:
+    - task: docker:stack:exec
+      vars:
+        STACK_NAME: "symfony"
+        SERVICE_NAME: "www"
+        COMMAND: "{{.COMMAND}}"
+        INTERACTIVE: "{{.INTERACTIVE}}"
+
+  symfony:about:
+    desc: "Affiche les informations Symfony"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "about"
+
+  symfony:console:
+    desc: "Exécute une commande Symfony"
+    silent: true
+    vars:
+      CMD: '{{.CMD | default ""}}'
+      # Désactiver l'interactivité en environnement CI/CD
+      INTERACTIVE: '{{if or (eq (env "DOCKER_INTERACTIVE") "false") (eq (env "CI") "true") (eq (env "GITHUB_ACTIONS") "true")}}false{{else}}true{{end}}'
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "symfony console {{.CMD}}"
+
+  symfony:assets:
+    desc: "Installe les assets Symfony"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "assets:install public --symlink --relative"
+
+  symfony:cache-clear:
+    desc: "Vide le cache Symfony"
+    silent: true
+    cmds:
+    - task: symfony:console
+      vars:
+        CMD: "cache:clear"
+
+  composer:exec:
+    desc: "Exécute une commande Composer"
+    silent: true
+    vars:
+      CMD: '{{.CMD | default ""}}'
+    cmds:
+    - task: symfony:cmd-exec
+      vars:
+        COMMAND: "symfony composer {{.CMD}}"
+
+  composer:fund:
+    desc: "Affiche les liens de financement des dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "fund"
+
+  composer:install:
+    desc: "Installe les dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "install"
+
+  composer:outdated:
+    desc: "Affiche les dépendances obsolètes"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "outdated"
+
+  composer:suggests:
+    desc: "Affiche les suggestions des dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "suggests"
+
+  composer:update:
+    desc: "Met à jour les dépendances Composer"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "update"
+
+  composer:validate:
+    desc: "Valide le fichier composer.json"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "validate"
+
+  composer:install:dev:
+    desc: "Installe les dépendances Composer pour le développement"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "install --no-progress --prefer-dist --optimize-autoloader"
+
+  composer:install:prod:
+    desc: "Installe les dépendances Composer pour la production"
+    silent: true
+    cmds:
+    - task: composer:exec
+      vars:
+        CMD: "install --no-progress --prefer-dist --optimize-autoloader --no-dev"
+
+  cmd:validate_outdated:
+    desc: "Valide les dépendances obsolètes"
+    silent: true
+    cmds:
+    - task: composer:validate
+    - task: composer:outdated
+
+  symfony:set-env-ids:
+    desc: "Met à jour les UID/GID dans le fichier .env"
+    silent: true
+    cmds:
+    - |
+      if ! grep -q "UID=" .env; then
+        echo "UID=$(id -u)" >> .env
+      else
+        sed -i "s/UID=.*/UID=$(id -u)/" .env
+      fi
+    - |
+      if ! grep -q "GID=" .env; then
+        echo "GID=$(id -g)" >> .env
+      else
+        sed -i "s/GID=.*/GID=$(id -g)/" .env
+      fi

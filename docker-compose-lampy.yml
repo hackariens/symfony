@@ -1,13 +1,39 @@
 version: "3.4"
 networks:
+  net:
+    driver: overlay
+    attachable: true
   proxylampy:
     external: true
   serverlampy:
     external: true
 services:
-  apache:
+  www:
+    image: koromerzhin/php:8.4.3-apache-symfony
+    user: "${UID:-1000}:${GID:-1000}"
+    depends_on:
+      - mariadb
+      - mercure
+      - mailhog
+      - redis
+    volumes:
+      - ${PWD}/apps:/var/www/:rw
+      - ${PWD}/conf/php.ini-development://usr/local/etc/php/conf.d/php.ini
+      - ${PWD}/conf/apache2/000-default.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ${PWD}/conf/apache2/apache2.conf:/etc/apache2/apache2.conf:ro
+    environment:
+      APP_SECRET: "CHANGEME"
+      MAILER_DSN: "smtp://mailtest:1025"
+      MESSENGER_TRANSPORT_DSN: "doctrine://default"
+      LOCK_DNS: semaphore
+      DATABASE_BDD: symfony_bdd
+      DATABASE_USER: symfony
+      DATABASE_PASSWORD: password
+      DATABASE_URL: "mysqli://symfony:password@mariadb:3306/symfony_bdd"
+      HOME: "/var/www"
     networks:
       - net
+      - serverlampy
       - proxylampy
     deploy:
       labels:
@@ -16,17 +42,3 @@ services:
         - "traefik.http.routers.symfony-tls.tls.domains[0].main=symfony.traefik.me"
         - "traefik.http.routers.symfony.tls=true"
         - "traefik.http.services.symfony.loadbalancer.server.port=80"
-  phpfpm:
-    environment:
-      APP_ENV: dev
-      APP_SECRET: "6fc13c15dc2208ac54cfd2f3b348dbc7"
-      MAILER_DSN: "smtp://mailhog:1025"
-      MESSENGER_TRANSPORT_DSN: "doctrine://default"
-      LOCK_DNS: semaphore
-      DATABASE_BDD: symfony_bdd
-      DATABASE_USER: symfony
-      DATABASE_PASSWORD: password
-      DATABASE_URL: "mysqli://symfony:password@mariadb:3306/symfony_bdd"
-    networks:
-      - net
-      - serverlampy
