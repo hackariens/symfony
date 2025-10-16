@@ -21,7 +21,7 @@ vars:
   FILESQL: '{{.FILESQL | default "dump.sql"}}'
   FOLDERLAMPY: '{{.FOLDERLAMPY | default "lampy"}}'
   SERVERNAME: '{{.SERVERNAME | default "symfony.traefik.me"}}'
-  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose.yml"}}'
+  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose-lampy.yml"}}'
   SYMFONYVERSION: '{{.SYMFONYVERSION | default "7.3"}}'
 
 tasks:
@@ -118,7 +118,7 @@ tasks:
     desc: "Installation initiale de Composer et des dépendances"
     silent: true
     cmds:
-    - docker run --rm -v $(pwd)/apps:/var/www -w /var/www $(pwd)/apps:/var/www -w /var/www $(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}}) symfony composer install
+    - docker run --rm -v $(pwd)/apps:/var/www -w /var/www $(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}}) symfony composer install
 
   symfony:waiting:
     desc: "Attend que les services soient opérationnels"
@@ -141,7 +141,7 @@ tasks:
     desc: "Crée un nouveau projet Symfony dans le dossier apps"
     silent: true
     cmds:
-    - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) $(pwd)/apps:/var/www -w /var/www $(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}}) sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
+    - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) $(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}}) sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
     - rm -rf ./apps/.git
     - rm -rf ./.gitconfig
 
