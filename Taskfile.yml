@@ -10,18 +10,18 @@ includes:
   env: ./taskfiles/env/Taskfile.yml
   nodejs: ./taskfiles/nodejs/Taskfile.yml
   download: ./taskfiles/download/Taskfile.yml
+  apache: ./taskfiles/apache/Taskfile.yml
 
 vars:
   # Variables avec valeurs par défaut depuis .env ou valeurs de fallback
   PROJECT_NAME: '{{.PROJECT_NAME | default "symfony"}}'
-  PROJECT_VERSION: '1.0.0'
   ENVIRONMENT: '{{.ENVIRONMENT | default "development"}}'
   STACK_NAME: '{{.STACK | default "symfony"}}'
   FOLDERSQL: '{{.FOLDERSQL | default "database_init"}}'
   FILESQL: '{{.FILESQL | default "dump.sql"}}'
   FOLDERLAMPY: '{{.FOLDERLAMPY | default "lampy"}}'
   SERVERNAME: '{{.SERVERNAME | default "symfony.traefik.me"}}'
-  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose.yml"}}'
+  DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose-lampy.yml"}}'
   SYMFONYVERSION: '{{.SYMFONYVERSION | default "7.3"}}'
 
 tasks:
@@ -35,12 +35,18 @@ tasks:
     - task --list
     - echo ""
 
+  lint:all:
+    desc: "Exécute tous les linters disponibles"
+    cmds:
+    - npm run lint:markdown
+
   info:
     desc: "Affiche les informations du projet avec les variables d'environnement"
     silent: true
     cmds:
     - |
-      echo "🛠️  {{.PROJECT_NAME}} v{{.PROJECT_VERSION}} - Collection de Taskfiles"
+      export PROJECT_VERSION=$(jq -r .version package.json)
+      echo "🛠️  {{.PROJECT_NAME}} v$PROJECT_VERSION - Collection de Taskfiles"
       echo "Environnement: {{.ENVIRONMENT}}"
 
   help:
@@ -63,23 +69,23 @@ tasks:
     silent: true
     cmds:
     - rm -rf ./conf/apache2 || true
-    - docker create --name symfony-php koromerzhin/php:8.4.3-apache-symfony
     - mkdir -p ./conf/apache2
-    - docker cp symfony-php:/etc/apache2/sites-available/000-default.conf ./conf/apache2/000-default.conf
-    - docker cp symfony-php:/etc/apache2/apache2.conf ./conf/apache2/apache2.conf
+    - task docker:create CONTAINER_NAME=symfony-php IMAGE_NAME=$(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}})
+    - task: docker:getfile
+      vars:
+        CONTAINER_NAME: "symfony-php"
+        FILE_PATH: "/etc/apache2/sites-available/000-default.conf"
+        DEST_PATH: "./conf/apache2/000-default.conf"
+    - task: docker:getfile
+      vars:
+        CONTAINER_NAME: "symfony-php"
+        FILE_PATH: "/etc/apache2/apache2.conf"
+        DEST_PATH: "./conf/apache2/apache2.conf"
     - docker rm -f symfony-php
-
-    - sed -ri -e 's|\$\{APACHE_DOCUMENT_ROOT\}|/var/www/public|g' ./conf/apache2/000-default.conf
-    - sed -ri -e 's|#ServerName www.example.com|ServerName {{.SERVERNAME}}|g' ./conf/apache2/000-default.conf
-    - sed -ri -e 's|\$\{APACHE_DOCUMENT_ROOT\}|/var/www/public|g' ./conf/apache2/apache2.conf
-    - |
-      sed -i '/^# Global configuration/a\
-      #\
-      # ServerName: Set the servers fully qualified domain name globally\
-      # This suppresses the warning about not being able to reliably determine\
-      # the servers fully qualified domain name\
-      #\
-      ServerName {{.SERVERNAME}}' ./conf/apache2/apache2.conf
+    - task: apache:updateconfig
+      vars:
+        SERVERNAME: "{{.SERVERNAME}}"
+        APACHE_DOCUMENT_ROOT: "/var/www/public"
 
   symfony:copysql:
     desc: "Copie le fichier SQL de dump dans le dossier symfony"
@@ -112,7 +118,7 @@ tasks:
     desc: "Installation initiale de Composer et des dépendances"
     silent: true
     cmds:
-    - docker run --rm -v $(pwd)/apps:/var/www -w /var/www koromerzhin/php:8.4.3-apache-symfony symfony composer install
+    - docker run --rm -v $(pwd)/apps:/var/www -w /var/www $(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}}) symfony composer install
 
   symfony:waiting:
     desc: "Attend que les services soient opérationnels"
@@ -135,7 +141,7 @@ tasks:
     desc: "Crée un nouveau projet Symfony dans le dossier apps"
     silent: true
     cmds:
-    - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) koromerzhin/php:8.4.3-apache-symfony sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
+    - docker run --rm -v $(pwd):/var/www -w /var/www -e COMPOSER_MEMORY_LIMIT=512M -e HOME=/var/www --user $(id -u):$(id -g) $(awk '/www:/ {f=1} f && /image:/ {print $2; exit}' {{.DOCKERCOMPOSEFILE}}) sh -c "git config --global user.name 'Symfony Project' && git config --global user.email 'symfony@example.com' && symfony new apps --version='{{.SYMFONYVERSION}}' --webapp"
     - rm -rf ./apps/.git
     - rm -rf ./.gitconfig
 
