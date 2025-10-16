@@ -9,7 +9,7 @@ networks:
     external: true
 services:
   www:
-    image: koromerzhin/php:8.4.3-apache-symfony
+    image: koromerzhin/php:8.4.13-apache-symfony
     user: "${UID:-1000}:${GID:-1000}"
     depends_on:
       - mariadb
