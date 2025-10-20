@@ -1,4 +1,3 @@
-version: "3.4"
 networks:
   net:
     driver: overlay
@@ -11,11 +10,6 @@ services:
   www:
     image: koromerzhin/php:8.4.13-apache-symfony
     user: "${UID:-1000}:${GID:-1000}"
-    depends_on:
-      - mariadb
-      - mercure
-      - mailhog
-      - redis
     volumes:
       - ${PWD}/apps:/var/www/:rw
       - ${PWD}/conf/php.ini-development://usr/local/etc/php/conf.d/php.ini

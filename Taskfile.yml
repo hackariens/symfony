@@ -11,6 +11,7 @@ includes:
   nodejs: ./taskfiles/nodejs/Taskfile.yml
   download: ./taskfiles/download/Taskfile.yml
   apache: ./taskfiles/apache/Taskfile.yml
+  lint: ./taskfiles/lint/Taskfile.yml
 
 vars:
   # Variables avec valeurs par défaut depuis .env ou valeurs de fallback
@@ -38,7 +39,14 @@ tasks:
   lint:all:
     desc: "Exécute tous les linters disponibles"
     cmds:
-    - npm run lint:markdown
+    - task: lint:yml
+      vars:
+        IGNORE_DIR: "taskfiles,apps"
+    - task: lint:md
+      vars:
+        IGNORE_DIR: "taskfiles,apps"
+    - task: lint:action
+    - task: lint:docker
 
   info:
     desc: "Affiche les informations du projet avec les variables d'environnement"
