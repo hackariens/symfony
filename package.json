@@ -4,7 +4,6 @@
   "description": "Template de site internet sous Symfony",
   "main": "index.js",
   "scripts": {
-    "lint:markdown": "markdownlint README.md",
     "release": "release-it"
   },
   "repository": {
@@ -19,12 +18,12 @@
   },
   "homepage": "https://github.com/hackariens/symfony#readme",
   "devDependencies": {
-    "cypress": "^15.3.0",
-    "dotenv": "^17.2.3",
-    "jscpd": "^4.0.5",
-    "markdownlint-cli": "^0.45.0",
-    "release-it": "^19.0.5",
-    "webpack-notifier": "1.13.0",
-    "yaml-lint": "^1.7.0"
+    "cypress": "15.3.*",
+    "dotenv": "17.2.*",
+    "jscpd": "4.0.*",
+    "markdownlint-cli": "0.45.*",
+    "release-it": "19.0.*",
+    "webpack-notifier": "1.13.*",
+    "yaml-lint": "1.7.*"
   }
 }
