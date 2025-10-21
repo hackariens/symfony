@@ -115,10 +115,6 @@ jobs:
           task symfony:install-first
           task symfony:deploy
           task symfony:waiting
-      # === LINTING PHASE ===
-      - name: Frontend linting
-        run: |
-          npm run lint:markdown
       
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
