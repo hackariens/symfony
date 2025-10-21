@@ -21,9 +21,7 @@
     "cypress": "15.5.*",
     "dotenv": "17.2.*",
     "jscpd": "4.0.*",
-    "markdownlint-cli": "0.45.*",
     "release-it": "19.0.*",
-    "webpack-notifier": "1.13.*",
-    "yaml-lint": "1.7.*"
+    "webpack-notifier": "1.13.*"
   }
 }
