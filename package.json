@@ -18,10 +18,10 @@
   },
   "homepage": "https://github.com/hackariens/symfony#readme",
   "devDependencies": {
-    "cypress": "15.5.*",
-    "dotenv": "17.2.*",
-    "jscpd": "4.0.*",
-    "release-it": "19.0.*",
-    "webpack-notifier": "1.13.*"
+    "cypress": "15.21.*",
+    "dotenv": "17.4.*",
+    "jscpd": "4.3.*",
+    "release-it": "19.2.*",
+    "webpack-notifier": "1.15.*"
   }
 }
