@@ -19,9 +19,9 @@
   "homepage": "https://github.com/hackariens/symfony#readme",
   "devDependencies": {
     "cypress": "16.1.*",
-    "dotenv": "17.2.*",
+    "dotenv": "17.4.*",
     "jscpd": "5.2.*",
     "release-it": "21.0.*",
-    "webpack-notifier": "1.13.*"
+    "webpack-notifier": "1.17.*"
   }
 }
