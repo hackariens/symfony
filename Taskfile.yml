@@ -23,7 +23,7 @@ vars:
   FOLDERLAMPY: '{{.FOLDERLAMPY | default "lampy"}}'
   SERVERNAME: '{{.SERVERNAME | default "symfony.traefik.me"}}'
   DOCKERCOMPOSEFILE: '{{.DOCKERCOMPOSEFILE | default "docker-compose-lampy.yml"}}'
-  SYMFONYVERSION: '{{.SYMFONYVERSION | default "7.3"}}'
+  SYMFONYVERSION: '{{.SYMFONYVERSION | default "8.1"}}'
 
 tasks:
   default:
