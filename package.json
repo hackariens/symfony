@@ -20,8 +20,8 @@
   "devDependencies": {
     "cypress": "16.1.*",
     "dotenv": "17.4.*",
-    "jscpd": "5.2.*",
-    "release-it": "21.0.*",
+    "jscpd": "5.3.*",
+    "release-it": "21.1.*",
     "webpack-notifier": "1.17.*"
   }
 }
